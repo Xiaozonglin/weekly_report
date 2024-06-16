@@ -10,7 +10,10 @@ use axum::{
 };
 use chrono::{Datelike, Utc};
 use serde::Deserialize;
-use tower_http::trace::TraceLayer;
+use tower_http::{
+    services::{ServeDir, ServeFile},
+    trace::TraceLayer,
+};
 use tracing::{debug, debug_span, Span};
 use wr_database::{report, user, Database};
 
@@ -22,6 +25,9 @@ use crate::{
 
 pub async fn initialize(state: GlobalState) -> anyhow::Result<Router> {
     let api_router = construct_router(&state);
+    let serve_dir = ServeDir::new(std::env::var("WR_STATIC")?).not_found_service(ServeFile::new(
+        format!("{}/index.html", std::env::var("WR_STATIC")?),
+    ));
     let router = Router::new()
         .nest("/api", api_router)
         .layer(
@@ -40,6 +46,7 @@ pub async fn initialize(state: GlobalState) -> anyhow::Result<Router> {
                     debug!("[{}] in {}ms", response.status(), latency.as_millis());
                 }),
         )
+        .fallback_service(serve_dir)
         .with_state::<()>(state);
     Ok(router)
 }
