@@ -26,6 +26,14 @@ axum-extra = { version = "0.9", features = [
   "typed-header",
   "query",
   "multipart",
+  "cookie",
   "typed-routing",
   "async-read-body",
 ] }
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "wr-server"
+path = "src/main.rs"
