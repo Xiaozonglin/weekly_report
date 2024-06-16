@@ -1,0 +1,76 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+
+@import './article.scss';
+@import './avatar.scss';
+@import './button.scss';
+@import './card.scss';
+@import './checkbox.scss';
+@import './dialog.scss';
+@import './divider.scss';
+@import './editor.scss';
+@import './input.scss';
+@import './label.scss';
+@import './progress.scss';
+@import './select.scss';
+@import './skeleton.scss';
+@import './slider.scss';
+@import './splitter.scss';
+@import './tag.scss';
+@import './toast.scss';
+
+@import './scrollbar.scss';
+
+@import 'tailwindcss/utilities';
+@import 'tailwindcss/variants';
+
+/* Disable scrollbar */
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Device specific */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+/** Hide input[type=number] arrows */
+/* Firefox */
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Terminal-like selection color */
+::selection {
+  @apply bg-layer-content text-layer;
+}
+
+html,
+body {
+  @apply min-h-full min-w-full m-0 p-0;
+  @apply bg-layer text-layer-content;
+}
+
+.root {
+  @apply min-h-full min-w-full m-0 p-0;
+}
+
+[hidden] {
+  @apply hidden;
+}
+
+.os-scrollbar {
+  pointer-events: auto;
+  visibility: visible !important;
+}

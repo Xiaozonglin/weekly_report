@@ -1,0 +1,103 @@
+article.prose,
+article.prose * {
+  @apply scroll-m-20 indent-[2em];
+}
+
+nav.toc * {
+  @apply indent-0;
+}
+
+nav.toc {
+  @apply prose m-0 p-0;
+}
+
+nav.toc ol {
+  @apply m-0 p-0 pl-2 #{!important};
+}
+
+nav.toc li {
+  @apply list-disc list-inside leading-relaxed;
+}
+
+nav.toc a {
+  @apply text-layer-content/80 no-underline hover:underline;
+}
+
+article > pre,
+article > pre * {
+  @apply text-base break-words indent-0 #{!important};
+}
+
+article > pre {
+  @apply bg-layer-content/5 backdrop-blur rounded-md mx-1 indent-0 min-w-0 text-wrap #{!important};
+}
+
+code:not(pre code) {
+  @apply text-[1em] break-words bg-layer-content/10 rounded-sm mx-1 px-1 indent-0 #{!important};
+  @apply before:content-[''] after:content-[''] #{!important};
+}
+
+article.prose img {
+  @apply rounded-lg #{!important};
+}
+
+article > h1 > a,
+article > h2 > a,
+article > h3 > a,
+article > h4 > a,
+article > h5 > a,
+article > h6 > a {
+  @apply no-underline indent-0 #{!important};
+}
+
+article > h1, article > h2, article > h3, article > h4, article > h5, article > h6 {
+  @apply indent-0 #{!important};
+}
+
+article > ol > li,
+article > ul > li {
+  @apply list-inside indent-0 #{!important};
+}
+
+article > h1 > a,
+article > h2 > a {
+  @apply font-bold #{!important};
+}
+
+article > h3 > a,
+article > h4 > a {
+  @apply font-semibold #{!important};
+}
+
+article > h1 > a:hover::after,
+article > h2 > a:hover::after,
+article > h3 > a:hover::after,
+article > h4 > a:hover::after,
+article > h5 > a:hover::after,
+article > h6 > a:hover::after {
+  content: '¶';
+  @apply text-primary opacity-60 ml-4;
+}
+
+article blockquote {
+  @apply border-l-primary bg-primary/10 indent-0 rounded-md p-0 m-1 backdrop-blur #{!important};
+
+  & > p {
+    @apply px-4 py-2 indent-0 #{!important};
+    @apply before:content-[''] after:content-[''] #{!important};
+  }
+}
+
+article a:not(h1 > a, h2 > a, h3 > a, h4 > a, h5 > a, h6 > a) {
+  @apply text-primary no-underline hover:underline #{!important};
+}
+
+@layer components {
+  .article {
+    @apply prose prose-zinc px-3 lg:px-6 print:px-12 print:pb-12;
+  }
+
+  :root[data-style='dark'] .article {
+    @apply prose-invert;
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "platform": {
+    "name": "XDSEC Weekly Report",
+    "reject": "Reject",
+    "accept": "Accept"
+  },
+  "form": {
+    "copy": "Copy"
+  }
+}

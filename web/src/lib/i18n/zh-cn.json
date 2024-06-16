@@ -1,0 +1,10 @@
+{
+  "platform": {
+    "name": "XDSEC 周报平台",
+    "reject": "不行",
+    "accept": "好的"
+  },
+  "form": {
+    "copy": "复制"
+  }
+}

@@ -1,0 +1,13 @@
+[package]
+name = "wr-migrator"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.79.0"
+description = "Database migrator for Weekly Report"
+authors = ["Reverier-Xu <reverier.xu@xdsec.club>"]
+publish = false
+homepage = "https://wr.xdsec.org/"
+resolver = "2"
+
+[dependencies]
+tokio = { version = "1.38", features = ["full"] }

@@ -1,0 +1,10 @@
+{
+    "name": "XDSEC Weekly Report",
+    "icons": [
+        {
+            "src": "/favicon.png",
+            "type": "image/png",
+            "density": "0.75"
+        }
+    ]
+}
