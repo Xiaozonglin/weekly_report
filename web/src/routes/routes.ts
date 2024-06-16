@@ -13,8 +13,8 @@ export const routes = {
             component: lazy(() => import("./week/layout")),
             children: [
                 {
-                    path: "/:user",
-                    component: lazy(() => import("./week/[user]")),
+                    path: "/:week",
+                    component: lazy(() => import("./week/[week]")),
                 },
             ],
         },
@@ -23,12 +23,26 @@ export const routes = {
             component: lazy(() => import("./user/layout")),
             children: [
                 {
-                    path: "/:week",
-                    component: lazy(() => import("./user/[week]")),
+                    path: "/:user",
+                    component: lazy(() => import("./user/[user]")),
                 },
                 {
                     path: "/settings",
                     component: lazy(() => import("./user/settings")),
+                },
+            ],
+        },
+        {
+            path: "/submit",
+            component: lazy(() => import("./submit")),
+        },
+        {
+            path: "/admin",
+            component: lazy(() => import("./admin/layout")),
+            children: [
+                {
+                    path: "/",
+                    component: lazy(() => import("./admin")),
                 },
             ],
         },

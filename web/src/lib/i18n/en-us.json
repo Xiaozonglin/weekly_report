@@ -2,9 +2,65 @@
   "platform": {
     "name": "XDSEC Weekly Report",
     "reject": "Reject",
-    "accept": "Accept"
+    "accept": "Accept",
+    "diyBox": "Theme",
+    "followSystem": "Follow system",
+    "noNotifications": "No unread messages",
+    "notificationBox": "Message box",
+    "clearNotifications": "Clear messages"
+  },
+  "loading": {
+    "0": "Fixing cosmic ray-induced bit flips...",
+    "1": "Proving P != NP...",
+    "2": "Factoring RSA 4096...",
+    "3": "Dividing by 0...",
+    "4": "Downloading more RAM...",
+    "5": "Ordering 1s and 0s...",
+    "6": "Navigating neural network...",
+    "7": "Importing machine learning...",
+    "8": "Issuing Alice and Bob one-time pads...",
+    "9": "Trying to escape vim...",
+    "10": "Using magnifying glass and pencil to rescue data...",
+    "11": "Symlinking emacs and vim to ed...",
+    "12": "Training branch predictor...",
+    "13": "Timing cache hits...",
+    "14": "Speculatively executing recipes...",
+    "15": "Adding LLM hallucinations..."
+  },
+  "errors": {
+    "401": "please log in first",
+    "403": "Access denied",
+    "404": "Not found",
+    "418": "I am a teapot",
+    "500": "Server internal error",
+    "502": "System is down",
+    "401Tip": "Even if you do good deeds, please leave your name",
+    "403Tip": "There is always a door closed to you",
+    "404Tip": "Life is always a little ridiculous",
+    "418Tip": "Does brewing coffee in a teapot really prevent odor transfer?",
+    "500Tip": "You kicked the server and made it smoke.",
+    "502Tip": "Randomly kill a dev&ops guy",
+    "unknown": "unknown mistake",
+    "unknownTip": "you fell into the void"
   },
   "form": {
-    "copy": "Copy"
+    "copy": "Copy",
+    "createReport": "Submit weekly report",
+    "submit": "Submit"
+  },
+  "submit": {
+    "title": "Submit weekly report",
+    "required": "Can you at least write something before submit it?",
+    "placeholder": "Supports Markdown syntax and external link images. Uploading images is not supported yet. Please use the public image services."
+  },
+  "admin": {
+    "title": "Admin"
+  },
+  "table": {
+    "people": "Member",
+    "level": "Level",
+    "direction": "Direction",
+    "goto": "Click to view",
+    "empty": "Nothing here"
   }
 }
