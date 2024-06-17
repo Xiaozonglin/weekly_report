@@ -7,7 +7,13 @@
     "followSystem": "跟随系统",
     "noNotifications": "没有未读消息",
     "notificationBox": "消息盒子",
-    "clearNotifications": "清空消息"
+    "clearNotifications": "清空消息",
+    "hello": "你好",
+    "notImplemented": "没写，自己改数据库去",
+    "notImplementedTips": "随机献祭一个rx，生产力提升了！",
+    "notImplementedTips1": "不是哥们，生产队的驴都不敢像你这么歇",
+    "notImplementedTips2": "这边这位rx桑，更是堆屎山代码的天才",
+    "notImplementedTips3": "你说得对，但是rx是一个一个一个一个……"
   },
   "loading": {
     "0": "正在修复宇宙射线引发的比特翻转...",
@@ -46,12 +52,14 @@
   "form": {
     "copy": "复制",
     "createReport": "提交周报",
-    "submit": "提交"
+    "submit": "提交",
+    "selectSomething": "选择一篇你想看的周报"
   },
   "submit": {
     "title": "提交周报",
     "required": "至少写点啥再交吧？",
-    "placeholder": "支持 Markdown 语法和外链图片，暂不支持上传图片，请使用公共图床"
+    "placeholder": "支持 Markdown 语法和外链图片，暂不支持上传图片，请使用公共图床",
+    "success": "提交成功"
   },
   "admin": {
     "title": "管理"
@@ -62,5 +70,15 @@
     "direction": "方向",
     "goto": "点击查看",
     "empty": "这里什么也没有"
+  },
+  "week": {
+    "title": "第 {{week}} 周 周报"
+  },
+  "user": {
+    "title": "{{user}} 的周报",
+    "week": "第 {{week}} 周"
+  },
+  "report": {
+    "title": "{{user}} 的第 {{week}} 周周报"
   }
 }

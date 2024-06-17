@@ -7,7 +7,13 @@
     "followSystem": "Follow system",
     "noNotifications": "No unread messages",
     "notificationBox": "Message box",
-    "clearNotifications": "Clear messages"
+    "clearNotifications": "Clear messages",
+    "hello": "H E L O",
+    "notImplemented": "Not Implemented",
+    "notImplementedTips": "Sacrificing an rx randomly, productivity increased!",
+    "notImplementedTips1": "Oh no guys, even the donkeys in the production team dare not rest like you",
+    "notImplementedTips2": "This is rx, he is even more of a genius at building shit mountains of code.",
+    "notImplementedTips3": "You are right, but rx is a homo..."
   },
   "loading": {
     "0": "Fixing cosmic ray-induced bit flips...",
@@ -46,12 +52,14 @@
   "form": {
     "copy": "Copy",
     "createReport": "Submit weekly report",
-    "submit": "Submit"
+    "submit": "Submit",
+    "selectSomething": "Choose a weekly report you want to read"
   },
   "submit": {
     "title": "Submit weekly report",
     "required": "Can you at least write something before submit it?",
-    "placeholder": "Supports Markdown syntax and external link images. Uploading images is not supported yet. Please use the public image services."
+    "placeholder": "Supports Markdown syntax and external link images. Uploading images is not supported yet. Please use the public image services.",
+    "success": "Submitted successfully"
   },
   "admin": {
     "title": "Admin"
@@ -62,5 +70,15 @@
     "direction": "Direction",
     "goto": "Click to view",
     "empty": "Nothing here"
+  },
+  "week": {
+    "title": "Weekly report for {{week}}"
+  },
+  "user": {
+    "title": "{{user}}'s weekly report",
+    "week": "Week {{week}}"
+  },
+  "report": {
+    "title": "Weekly report {{week}} for {{user}}"
   }
 }

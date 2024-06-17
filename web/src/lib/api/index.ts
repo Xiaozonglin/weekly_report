@@ -39,3 +39,7 @@ export async function get_user_list(hidden: boolean) {
 export async function get_user(user: number) {
     return await api.get(`${api_root}/user?id=${user}`).json<User>();
 }
+
+export async function submit_report(content: string) {
+    return await api.post(`${api_root}/report`, { json: { content } }).json<Report>();
+}

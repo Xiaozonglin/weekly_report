@@ -46,6 +46,7 @@ pub async fn initialize(state: GlobalState) -> anyhow::Result<Router> {
                     debug!("[{}] in {}ms", response.status(), latency.as_millis());
                 }),
         )
+        .nest_service("/", serve_dir.clone())
         .fallback_service(serve_dir)
         .with_state::<()>(state);
     Ok(router)
@@ -128,7 +129,7 @@ async fn handle_submit(
 ) -> Result<impl IntoResponse, ResponseError> {
     let date = Utc::now();
     if date.weekday() != chrono::Weekday::Sun {
-        return Err(ResponseError::BadRequest("only Sunday".to_string()));
+        return Err(ResponseError::BadRequest("Only Sunday".to_string()));
     }
     let week = date.year() * 10_000 + date.month() as i32 * 100 + date.day() as i32;
     let report = report::get(&db.conn, user.id, week).await?;
@@ -172,7 +173,7 @@ async fn get_report(
             user: Some(user),
             week: Some(week),
         } => {
-            let report = report::get(&db.conn, user, week).await?;
+            let report = report::get_ex(&db.conn, user, week).await?;
             Ok(Json(report).into_response())
         }
         ReportQuery {

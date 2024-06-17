@@ -39,6 +39,13 @@ where
     Entity::find_by_id(user_id).one(db).await
 }
 
+pub async fn get_by_name<C>(db: &C, name: &str) -> Result<Option<Model>, DbErr>
+where
+    C: ConnectionTrait,
+{
+    Entity::find().filter(Column::Name.eq(name)).one(db).await
+}
+
 pub async fn get_list<C>(db: &C, with_hidden: bool) -> Result<Vec<Model>, DbErr>
 where
     C: ConnectionTrait,

@@ -1,5 +1,7 @@
 use chrono::{serde::ts_seconds, DateTime, Datelike, Duration, Utc};
-use sea_orm::{entity::prelude::*, ActiveValue, IntoActiveModel, JoinType, QuerySelect};
+use sea_orm::{
+    entity::prelude::*, ActiveValue, FromQueryResult, IntoActiveModel, JoinType, QuerySelect,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::user;
@@ -12,6 +14,17 @@ pub struct Model {
     pub author_id: i32,
     pub week: i32,
     #[sea_orm(column_type = "Text", nullable)]
+    pub content: Option<String>,
+    #[serde(with = "ts_seconds")]
+    pub date: DateTime<Utc>,
+}
+
+#[derive(Clone, Serialize, Deserialize, FromQueryResult)]
+pub struct ExModel {
+    pub id: i32,
+    pub author_id: i32,
+    pub author_name: String,
+    pub week: i32,
     pub content: Option<String>,
     #[serde(with = "ts_seconds")]
     pub date: DateTime<Utc>,
@@ -48,6 +61,20 @@ where
         .await
 }
 
+pub async fn get_ex<C>(db: &C, user_id: i32, week: i32) -> Result<Option<ExModel>, DbErr>
+where
+    C: ConnectionTrait,
+{
+    Entity::find()
+        .join(JoinType::InnerJoin, Relation::Author.def())
+        .column_as(user::Column::Name, "author_name")
+        .filter(Column::AuthorId.eq(user_id))
+        .filter(Column::Week.eq(week))
+        .into_model()
+        .one(db)
+        .await
+}
+
 pub async fn get_user_list<C>(db: &C, user_id: i32) -> Result<Vec<Model>, DbErr>
 where
     C: ConnectionTrait,
@@ -65,7 +92,7 @@ where
         .await
 }
 
-pub async fn get_week_list<C>(db: &C, week: i32) -> Result<Vec<Model>, DbErr>
+pub async fn get_week_list<C>(db: &C, week: i32) -> Result<Vec<ExModel>, DbErr>
 where
     C: ConnectionTrait,
 {
@@ -77,7 +104,10 @@ where
             Column::AuthorId,
             Column::Date,
         ])
+        .join(JoinType::InnerJoin, Relation::Author.def())
+        .column_as(user::Column::Name, "author_name")
         .filter(Column::Week.eq(week))
+        .into_model()
         .all(db)
         .await
 }

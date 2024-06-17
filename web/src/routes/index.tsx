@@ -3,21 +3,35 @@ import type { User } from "@/lib/models/user";
 import { Title } from "@/lib/storage/header";
 import { t } from "@/lib/storage/theme";
 import { addToast } from "@/lib/storage/toast";
+import { getCurrentWeek } from "@/lib/utils/time";
 import Link from "@/lib/widgets/link";
+import LoadingTips from "@/lib/widgets/loading-tips";
 import type { HTTPError } from "ky";
 import { For, Show, createSignal } from "solid-js";
 
 export default function () {
     const [userStates, setUserStates] = createSignal([] as User[]);
     const [weeks, setWeeks] = createSignal([] as number[]);
+    const [loading, setLoading] = createSignal(true);
+    const week_set = new Set<number>();
+    week_set.add(getCurrentWeek());
     get_reports()
         .then(([users, reports]) => {
             for (const user of users) {
                 user.recent_reports = reports
                     .filter((report) => report.author_id === user.id)
-                    .map((report) => report.week);
+                    .map((report) => {
+                        week_set.add(report.week);
+                        return report.week;
+                    });
             }
-            setUserStates(users);
+            setUserStates(
+                users.sort((a, b) => {
+                    if (a.direction !== b.direction) return a.direction!.localeCompare(b.direction!);
+                    return a.level - b.level;
+                })
+            );
+            setWeeks(Array.from(week_set).sort((a, b) => a - b));
         })
         .catch((err: HTTPError) => {
             err.response.text().then((text) => {
@@ -27,7 +41,8 @@ export default function () {
                     duration: 5000,
                 });
             });
-        });
+        })
+        .finally(() => setLoading(false));
     return (
         <>
             <Title title={t("platform.name")!} />
@@ -81,7 +96,12 @@ export default function () {
                         </For>
                     </tbody>
                 </table>
-                <Show when={userStates().length === 0}>
+                <Show when={loading()}>
+                    <div class="flex-1 flex flex-col items-center justify-center space-y-8">
+                        <LoadingTips />
+                    </div>
+                </Show>
+                <Show when={userStates().length === 0 && !loading()}>
                     <div class="flex-1 flex flex-col items-center justify-center space-y-8">
                         <span class="icon-[fluent--archive-20-regular] w-12 h-12 opacity-60" />
                         <h2 class="font-bold text-2xl">{t("table.empty")}</h2>

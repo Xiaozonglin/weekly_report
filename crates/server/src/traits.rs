@@ -1,7 +1,7 @@
 use axum::{
     body::Body,
     extract::FromRef,
-    http::StatusCode,
+    http::{header::ToStrError, StatusCode},
     response::{IntoResponse, Response},
 };
 use thiserror::Error;
@@ -42,6 +42,8 @@ pub enum ResponseError {
     FileIoError(#[from] std::io::Error),
     #[error("parse int error: {0}")]
     ParseIntError(#[from] std::num::ParseIntError),
+    #[error("to str error: {0}")]
+    ToStrError(#[from] ToStrError),
 }
 
 macro_rules! log_with_resp {
@@ -103,6 +105,13 @@ impl IntoResponse for ResponseError {
                 log_with_resp!(
                     StatusCode::BAD_REQUEST,
                     "failed to parse integer".to_owned(),
+                    e.to_string()
+                )
+            }
+            ResponseError::ToStrError(e) => {
+                log_with_resp!(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "failed to convert to string".to_owned(),
                     e.to_string()
                 )
             }

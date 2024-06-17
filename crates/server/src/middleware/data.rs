@@ -1,24 +1,30 @@
 use axum::{
     extract::{Request, State},
+    http::HeaderMap,
     middleware::Next,
     response::IntoResponse,
 };
-use axum_extra::extract::CookieJar;
 use wr_database::{user, Database};
 
 use crate::ResponseError;
 
 pub async fn prepare_user_info(
     State(ref db): State<Database>,
-    jar: CookieJar,
+    header: HeaderMap,
     mut req: Request,
     next: Next,
 ) -> Result<impl IntoResponse, ResponseError> {
-    if let Some(user_id) = jar.get("id") {
-        let user_id: i32 = user_id.value().parse()?;
-        let user = user::get(&db.conn, user_id).await?;
-        req.extensions_mut().insert(user);
-        Ok(next.run(req).await)
+    if let Some(user_id) = header.get("x-nickname") {
+        let nickname = user_id.to_str()?;
+        let user = user::get_by_name(&db.conn, nickname).await?;
+        if let Some(user) = user {
+            req.extensions_mut().insert(user);
+            Ok(next.run(req).await)
+        } else {
+            Err(ResponseError::Unauthorized(
+                "please login first".to_string(),
+            ))
+        }
     } else {
         Err(ResponseError::Unauthorized(
             "please login first".to_string(),

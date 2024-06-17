@@ -29,7 +29,7 @@ pub async fn initialize() -> Result<WorkerGuard, LoggerError> {
         .with_thread_names(false);
 
     tracing_subscriber::registry()
-        .with(EnvFilter::new("warn,wr-server=info"))
+        .with(EnvFilter::new("info"))
         .with(console_log_layer)
         .init();
 
