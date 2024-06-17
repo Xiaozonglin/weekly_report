@@ -46,11 +46,11 @@ export default function () {
     return (
         <>
             <Title title={t("platform.name")!} />
-            <div class="p-3 lg:p-6 flex flex-col flex-1">
+            <div class="p-3 lg:p-6 flex flex-col flex-1 relative">
                 <table>
-                    <thead class="border-b-2 border-b-layer-content/15 h-12 align-middle">
+                    <thead class="border-b-2 border-b-layer-content/15 bg-layer h-12 align-middle sticky top-16 z-20">
                         <tr>
-                            <th class="font-bold px-3 text-start" />
+                            <th class="font-bold px-3 text-start sticky left-0 bg-layer border-r border-r-layer-content/5 z-10" />
                             <th class="font-bold px-3 text-start">{t("table.level")}</th>
                             <th class="font-bold px-3 text-start">{t("table.direction")}</th>
                             <For each={weeks()}>
@@ -68,13 +68,13 @@ export default function () {
                         <For each={userStates()}>
                             {(user) => (
                                 <tr class="h-12 align-middle border-b border-b-layer-content/10">
-                                    <td class="px-1">
-                                        <Link ghost size="sm" class="w-full" href={`/user/${user.id}`}>
-                                            <span class="text-start flex-1">{user.name}</span>
+                                    <td class="px-1 text-nowrap sticky left-0 bg-layer border-r border-r-layer-content/5 z-10">
+                                        <Link ghost size="sm" class="w-full overflow-hidden" href={`/user/${user.id}`}>
+                                            <span class="text-start flex-1 truncate">{user.name}</span>
                                         </Link>
                                     </td>
-                                    <td class="px-3">{user.level}</td>
-                                    <td class="px-3">{user.direction}</td>
+                                    <td class="px-3 truncate">{user.level}</td>
+                                    <td class="px-3 truncate">{user.direction}</td>
                                     <For each={weeks()}>
                                         {(week) => (
                                             <td class="px-1 align-middle min-w-36">

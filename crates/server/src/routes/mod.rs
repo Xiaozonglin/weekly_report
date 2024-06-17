@@ -8,8 +8,8 @@ use axum::{
     routing::{get, patch, post},
     Extension, Json, Router,
 };
-use chrono::{Datelike, Utc};
-use serde::Deserialize;
+use chrono::{Datelike, Duration as ChronoDuration, Utc};
+use serde::{Deserialize, Serialize};
 use tower_http::{
     services::{ServeDir, ServeFile},
     trace::TraceLayer,
@@ -68,10 +68,41 @@ pub fn construct_router(state: &GlobalState) -> Router<GlobalState> {
             state.clone(),
             data::prepare_user_info,
         ))
+        .route("/status", get(get_status))
 }
 
 async fn ping() -> impl IntoResponse {
     "pong"
+}
+
+#[derive(Serialize)]
+struct StatusResponse {
+    submitted: Vec<String>,
+    pending: Vec<String>,
+}
+
+async fn get_status(State(ref db): State<Database>) -> Result<impl IntoResponse, ResponseError> {
+    let users = user::get_list(&db.conn, false).await?;
+    let now = Utc::now();
+    let next_sunday = if now.weekday() != chrono::Weekday::Sun {
+        now + ChronoDuration::days(6 - now.weekday().num_days_from_sunday() as i64)
+    } else {
+        now
+    };
+    let edge =
+        next_sunday.year() * 10_000 + next_sunday.month() as i32 * 100 + next_sunday.day() as i32;
+    let reports = report::get_week_list(&db.conn, edge).await?;
+    let mut submitted = vec![];
+    let mut pending = vec![];
+    for user in users {
+        let report = reports.iter().find(|r| r.author_id == user.id);
+        if report.is_some() {
+            submitted.push(user.name.clone());
+        } else {
+            pending.push(user.name.clone());
+        }
+    }
+    Ok(Json(StatusResponse { submitted, pending }))
 }
 
 #[derive(Deserialize)]

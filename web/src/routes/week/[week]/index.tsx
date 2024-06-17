@@ -4,7 +4,7 @@ import { t } from "@/lib/storage/theme";
 import { addToast } from "@/lib/storage/toast";
 import Article from "@/lib/widgets/article";
 import LoadingTips from "@/lib/widgets/loading-tips";
-import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
+import { A, useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import type { HTTPError } from "ky";
 import { Match, Switch, createEffect, createSignal, untrack } from "solid-js";
 
@@ -48,9 +48,17 @@ export default function () {
                     </div>
                 </Match>
                 <Match when={report()}>
-                    <div class="flex-1 flex flex-col items-center p-3 lg:p-6 pb-0 lg:pb-0">
-                        <h1 class="text-3xl font-bold">
-                            {t("report.title", { user: report()?.author_name!, week: report()?.week! })}
+                    <div class="flex-1 flex flex-col items-center p-3 lg:p-6">
+                        <h1 class="font-bold h-12 flex items-center px-2 space-x-2 border-b-2 border-b-layer-content/10 w-full max-w-5xl">
+                            <span class="flex-1 text-start">
+                                {t("report.title", { user: report()?.author_name!, week: report()?.week! })}
+                            </span>
+                            <A class="px-2" href={`/user/${report()?.author_id}`}>
+                                <span class="icon-[fluent--person-20-regular]" />
+                            </A>
+                            <A class="px-2" href={`/week/${report()?.week}`}>
+                                <span class="icon-[fluent--calendar-20-regular]" />
+                            </A>
                         </h1>
                         <Article extra headingAnchors content={report()?.content || ""} />
                     </div>

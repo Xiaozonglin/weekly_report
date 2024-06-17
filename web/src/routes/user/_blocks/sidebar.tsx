@@ -39,7 +39,8 @@ export default function () {
                 });
             get_user(user()!)
                 .then((data) => {
-                    setUserModel(data);
+                    if (data) setUserModel(data);
+                    else navigate("/sigtrap/404");
                 })
                 .catch((err: HTTPError) => {
                     err.response.text().then((text) => {
