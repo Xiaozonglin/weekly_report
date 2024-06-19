@@ -50,6 +50,10 @@ article > h6 > a {
   @apply no-underline indent-0 #{!important};
 }
 
+article > *:first-child {
+  @apply mt-6;
+}
+
 article > h1, article > h2, article > h3, article > h4, article > h5, article > h6 {
   @apply indent-0 #{!important};
 }
