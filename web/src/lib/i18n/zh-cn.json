@@ -58,7 +58,7 @@
   "submit": {
     "title": "提交周报",
     "required": "至少写点啥再交吧？",
-    "placeholder": "支持 Markdown 语法和外链图片，暂不支持上传图片，请使用公共图床",
+    "placeholder": "支持 GitHub Favored Markdown 语法和外链图片，暂不支持上传图片，请使用公共图床。",
     "success": "提交成功"
   },
   "admin": {

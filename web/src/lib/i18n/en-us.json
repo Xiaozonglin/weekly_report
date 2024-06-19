@@ -58,7 +58,7 @@
   "submit": {
     "title": "Submit weekly report",
     "required": "Can you at least write something before submit it?",
-    "placeholder": "Supports Markdown syntax and external link images. Uploading images is not supported yet. Please use the public image services.",
+    "placeholder": "Supports GitHub Favored Markdown syntax and external link images. Uploading images is not supported yet. Please use the public image services.",
     "success": "Submitted successfully"
   },
   "admin": {
