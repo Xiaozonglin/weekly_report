@@ -6,6 +6,7 @@ import rehypeExternalLinks from "rehype-external-links";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeSlug from "rehype-slug";
 import rehypeStringify from "rehype-stringify";
+import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { type Accessor, createSignal } from "solid-js";
@@ -32,6 +33,7 @@ export class Markdown {
     public async init(params: MarkdownProps) {
         // @ts-expect-error remark has not updated
         this.processor = unified().use(remarkParse);
+        this.processor?.use(remarkGfm);
         switch (params.type) {
             case "html":
                 await this.initHtml(params.options);
@@ -75,6 +77,7 @@ export class Markdown {
         if (options?.katex) {
             const rehypeKatex = await import("rehype-katex");
             await import("katex/dist/katex.css");
+            await import("./katex.scss");
             this.processor?.use(rehypeKatex.default);
         }
         if (options?.prism) {
