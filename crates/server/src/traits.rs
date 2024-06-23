@@ -44,6 +44,8 @@ pub enum ResponseError {
     ParseIntError(#[from] std::num::ParseIntError),
     #[error("to str error: {0}")]
     ToStrError(#[from] ToStrError),
+    #[error("from utf8 error: {0}")]
+    FromUtf8Error(#[from] std::string::FromUtf8Error),
 }
 
 macro_rules! log_with_resp {
@@ -112,6 +114,13 @@ impl IntoResponse for ResponseError {
                 log_with_resp!(
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "failed to convert to string".to_owned(),
+                    e.to_string()
+                )
+            }
+            ResponseError::FromUtf8Error(e) => {
+                log_with_resp!(
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "failed to convert from utf8".to_owned(),
                     e.to_string()
                 )
             }

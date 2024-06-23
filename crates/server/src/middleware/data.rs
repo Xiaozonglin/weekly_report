@@ -4,6 +4,7 @@ use axum::{
     middleware::Next,
     response::IntoResponse,
 };
+use urlencoding::decode;
 use wr_database::{user, Database};
 
 use crate::ResponseError;
@@ -15,8 +16,8 @@ pub async fn prepare_user_info(
     next: Next,
 ) -> Result<impl IntoResponse, ResponseError> {
     if let Some(user_id) = header.get("x-nickname") {
-        let nickname = user_id.to_str()?;
-        let user = user::get_by_name(&db.conn, nickname).await?;
+        let nickname = decode(user_id.to_str()?)?.to_string();
+        let user = user::get_by_name(&db.conn, &nickname).await?;
         if let Some(user) = user {
             req.extensions_mut().insert(user);
             Ok(next.run(req).await)

@@ -47,6 +47,7 @@ tracing-core = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 tracing-appender = "0.2"
 rustls = { version = "0.23", features = ["ring"] }
+urlencoding = "2.1"
 
 wr-database = { version = "0.1", path = "../database" }
 
