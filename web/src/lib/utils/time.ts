@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
 
 export function getCurrentWeek() {
-    const c = DateTime.now();
+    const c = DateTime.now().toUTC();
     if (c.weekday === 7) {
         return Number.parseInt(c.toFormat("yyyyMMdd"));
     }
