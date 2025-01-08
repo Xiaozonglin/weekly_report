@@ -25,9 +25,12 @@ use crate::{
 
 pub async fn initialize(state: GlobalState) -> anyhow::Result<Router> {
     let api_router = construct_router(&state);
-    let serve_dir = ServeDir::new(std::env::var("WR_STATIC")?).not_found_service(ServeFile::new(
-        format!("{}/index.html", std::env::var("WR_STATIC")?),
-    ));
+    let serve_dir = ServeDir::new(std::env::var("WR_STATIC")?)
+        .precompressed_gzip()
+        .not_found_service(ServeFile::new(format!(
+            "{}/index.html",
+            std::env::var("WR_STATIC")?
+        )));
     let router = Router::new()
         .nest("/api", api_router)
         .layer(
