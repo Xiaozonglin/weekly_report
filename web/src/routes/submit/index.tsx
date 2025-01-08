@@ -1,12 +1,12 @@
-import { get_report, submit_report } from "@/lib/api";
-import { accountStore } from "@/lib/storage/account";
-import { Title } from "@/lib/storage/header";
-import { t } from "@/lib/storage/theme";
-import { addToast } from "@/lib/storage/toast";
-import { getCurrentWeek } from "@/lib/utils/time";
-import Button from "@/lib/widgets/button";
-import Card from "@/lib/widgets/card";
-import Editor from "@/lib/widgets/editor";
+import { get_report, submit_report } from "@api";
+import { accountStore } from "@storage/account";
+import { Title } from "@storage/header";
+import { t } from "@storage/theme";
+import { addToast } from "@storage/toast";
+import { getCurrentWeek } from "@utils/time";
+import Button from "@widgets/button";
+import Card from "@widgets/card";
+import Editor from "@widgets/editor";
 import type { HTTPError } from "ky";
 import { createSignal } from "solid-js";
 

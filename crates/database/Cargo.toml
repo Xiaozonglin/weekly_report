@@ -10,13 +10,13 @@ homepage = "https://wr.xdsec.org/"
 resolver = "2"
 
 [dependencies]
-tokio = { version = "1.38", features = ["full"] }
-sea-orm = { version = "0.12", features = [
+tokio = { version = "1.42", features = ["full"] }
+sea-orm = { version = "1.1", features = [
   "sqlx-mysql",
   "runtime-tokio-rustls",
 ] }
-sea-orm-migration = "0.12"
-sea-query = "0.30"
+sea-orm-migration = "1.1"
+sea-query = "0.32"
 serde = { version = "1.0", features = ["derive"] }
 serde_repr = "0.1"
 serde_json = "1.0"

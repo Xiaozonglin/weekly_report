@@ -1,9 +1,9 @@
-import { get_report } from "@/lib/api";
-import type { Report } from "@/lib/models/report";
-import { t } from "@/lib/storage/theme";
-import { addToast } from "@/lib/storage/toast";
-import Article from "@/lib/widgets/article";
-import LoadingTips from "@/lib/widgets/loading-tips";
+import { get_report } from "@api";
+import type { Report } from "@models/report";
+import { t } from "@storage/theme";
+import { addToast } from "@storage/toast";
+import Article from "@widgets/article";
+import LoadingTips from "@widgets/loading-tips";
 import { A, useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import type { HTTPError } from "ky";
 import { Match, Switch, createEffect, createSignal, untrack } from "solid-js";

@@ -177,7 +177,7 @@ impl<'a> Iterator for ForwardedHeaderValueIterator<'a> {
     }
 }
 
-impl<'a> DoubleEndedIterator for ForwardedHeaderValueIterator<'a> {
+impl DoubleEndedIterator for ForwardedHeaderValueIterator<'_> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if let Some((last, rest)) = self.tail.split_last() {
             self.tail = rest;
@@ -190,13 +190,13 @@ impl<'a> DoubleEndedIterator for ForwardedHeaderValueIterator<'a> {
     }
 }
 
-impl<'a> ExactSizeIterator for ForwardedHeaderValueIterator<'a> {
+impl ExactSizeIterator for ForwardedHeaderValueIterator<'_> {
     fn len(&self) -> usize {
         self.tail.len() + usize::from(self.head.is_some())
     }
 }
 
-impl<'a> core::iter::FusedIterator for ForwardedHeaderValueIterator<'a> {}
+impl core::iter::FusedIterator for ForwardedHeaderValueIterator<'_> {}
 
 fn values_from_header(header_value: &str) -> impl Iterator<Item = &str> {
     header_value.trim().split(',').filter_map(|i| {

@@ -1,9 +1,9 @@
-import { get_user, get_user_reports } from "@/lib/api";
-import type { Report } from "@/lib/models/report";
-import type { User } from "@/lib/models/user";
-import { fullTheme, t } from "@/lib/storage/theme";
-import { addToast } from "@/lib/storage/toast";
-import Link from "@/lib/widgets/link";
+import { get_user, get_user_reports } from "@api";
+import type { Report } from "@models/report";
+import type { User } from "@models/user";
+import { fullTheme, t } from "@storage/theme";
+import { addToast } from "@storage/toast";
+import Link from "@widgets/link";
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import type { HTTPError } from "ky";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-solid";

@@ -1,8 +1,8 @@
-import { get_self } from "@/lib/api";
-import { setAccountStore } from "@/lib/storage/account";
-import { t, themeStore } from "@/lib/storage/theme";
-import { addToast } from "@/lib/storage/toast";
-import Link from "@/lib/widgets/link";
+import { get_self } from "@api";
+import { setAccountStore } from "@storage/account";
+import { t, themeStore } from "@storage/theme";
+import { addToast } from "@storage/toast";
+import Link from "@widgets/link";
 import xdsecLogo from "@assets/favicon.png";
 import { useNavigate, useParams } from "@solidjs/router";
 import type { HTTPError } from "ky";

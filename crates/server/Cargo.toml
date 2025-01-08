@@ -10,11 +10,11 @@ homepage = "https://wr.xdsec.org/"
 resolver = "2"
 
 [dependencies]
-tokio = { version = "1.38", features = ["full"] }
+tokio = { version = "1.42", features = ["full"] }
 tokio-util = "0.7"
 tokio-stream = "0.1"
 futures = "0.3"
-axum = { version = "0.7", features = [
+axum = { version = "0.8", features = [
   "ws",
   "http2",
   "multipart",
@@ -22,7 +22,7 @@ axum = { version = "0.7", features = [
   "tower-log",
   "tracing",
 ] }
-axum-extra = { version = "0.9", features = [
+axum-extra = { version = "0.10", features = [
   "typed-header",
   "query",
   "multipart",
@@ -30,11 +30,11 @@ axum-extra = { version = "0.9", features = [
   "typed-routing",
   "async-read-body",
 ] }
-tower = "0.4"
-tower-http = { version = "0.5", features = ["cors", "fs", "trace"] }
-thiserror = "1.0"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "fs", "trace"] }
+thiserror = "2.0"
 clap = { version = "4.5", features = ["derive"] }
-colored = "2.1"
+colored = "2.2"
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

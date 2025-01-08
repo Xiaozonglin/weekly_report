@@ -1,11 +1,11 @@
-import { get_reports } from "@/lib/api";
-import type { User } from "@/lib/models/user";
-import { Title } from "@/lib/storage/header";
-import { t } from "@/lib/storage/theme";
-import { addToast } from "@/lib/storage/toast";
-import { getCurrentWeek } from "@/lib/utils/time";
-import Link from "@/lib/widgets/link";
-import LoadingTips from "@/lib/widgets/loading-tips";
+import { get_reports } from "@api";
+import type { User } from "@models/user";
+import { Title } from "@storage/header";
+import { t } from "@storage/theme";
+import { addToast } from "@storage/toast";
+import { getCurrentWeek } from "@utils/time";
+import Link from "@widgets/link";
+import LoadingTips from "@widgets/loading-tips";
 import type { HTTPError } from "ky";
 import { For, Show, createSignal } from "solid-js";
 
