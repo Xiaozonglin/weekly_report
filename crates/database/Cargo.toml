@@ -10,7 +10,7 @@ homepage = "https://wr.xdsec.org/"
 resolver = "2"
 
 [dependencies]
-tokio = { version = "1.42", features = ["full"] }
+tokio = { version = "1.43", features = ["full"] }
 sea-orm = { version = "1.1", features = [
   "sqlx-mysql",
   "runtime-tokio-rustls",
