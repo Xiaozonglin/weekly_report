@@ -46,6 +46,16 @@ where
     Entity::find().filter(Column::Name.eq(name)).one(db).await
 }
 
+pub async fn get_by_email<C>(db: &C, email: &str) -> Result<Option<Model>, DbErr>
+where
+    C: ConnectionTrait,
+{
+    Entity::find()
+        .filter(Column::Email.eq(email.to_string()))
+        .one(db)
+        .await
+}
+
 pub async fn get_list<C>(db: &C, with_hidden: bool) -> Result<Vec<Model>, DbErr>
 where
     C: ConnectionTrait,

@@ -49,7 +49,6 @@ pub async fn initialize(state: GlobalState) -> anyhow::Result<Router> {
                     debug!("[{}] in {}ms", response.status(), latency.as_millis());
                 }),
         )
-        .nest_service("/", serve_dir.clone())
         .fallback_service(serve_dir)
         .with_state::<()>(state);
     Ok(router)
