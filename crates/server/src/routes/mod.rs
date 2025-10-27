@@ -272,13 +272,13 @@ async fn get_user_feed(
         None => return Err(ResponseError::Unauthorized("token required".to_string())),
     };
     let subscriber = user::get_by_feed_token(&db.conn, &token).await?;
-    match subscriber {
+    let subscriber = match subscriber {
         None => return Err(ResponseError::Unauthorized("invalid token".to_string())),
-        Some(sub) if sub.id != user.id => {
-            // token exists but does not belong to the requested feed owner
-            return Err(ResponseError::Unauthorized("invalid token for this feed".to_string()));
-        }
-        Some(_) => {}
+        Some(s) => s,
+    };
+    // Deny access for banned subscribers
+    if subscriber.is_banned {
+        return Err(ResponseError::Unauthorized("subscriber banned".to_string()));
     }
 
     // Return with proper RSS content-type
