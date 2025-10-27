@@ -112,6 +112,19 @@ where
         .await
 }
 
+pub async fn get_user_ex_list<C>(db: &C, user_id: i32) -> Result<Vec<ExModel>, DbErr>
+where
+    C: ConnectionTrait,
+{
+    Entity::find()
+        .join(JoinType::InnerJoin, Relation::Author.def())
+        .column_as(user::Column::Name, "author_name")
+        .filter(Column::AuthorId.eq(user_id))
+        .into_model()
+        .all(db)
+        .await
+}
+
 pub async fn get_index_list<C>(db: &C) -> Result<Vec<Model>, DbErr>
 where
     C: ConnectionTrait,

@@ -55,7 +55,11 @@ pub async fn initialize(state: GlobalState) -> anyhow::Result<Router> {
 }
 
 pub fn construct_router(state: &GlobalState) -> Router<GlobalState> {
-    Router::new()
+    // public routes (no auth required)
+    let public = Router::new().route("/{id}/feed/", get(get_user_feed));
+
+    // protected routes (may apply middleware)
+    let protected = Router::new()
         .route("/import", post(import_users))
         .route("/user", patch(modify_user))
         .route_layer(middleware::from_fn_with_state(
@@ -70,7 +74,9 @@ pub fn construct_router(state: &GlobalState) -> Router<GlobalState> {
             state.clone(),
             data::prepare_user_info,
         ))
-        .route("/status", get(get_status))
+        .route("/status", get(get_status));
+
+    public.merge(protected)
 }
 
 async fn ping() -> impl IntoResponse {
@@ -232,5 +238,88 @@ async fn get_report(
             let users = user::get_list(&db.conn, false).await?;
             Ok(Json((users, reports)).into_response())
         }
+    }
+}
+
+async fn get_user_feed(
+    State(ref db): State<Database>,
+    axum::extract::Path(id): axum::extract::Path<i32>,
+) -> Result<impl IntoResponse, ResponseError> {
+    let user = user::get(&db.conn, id).await?;
+    let user = match user {
+        Some(u) => u,
+        None => return Err(ResponseError::NotFound("user not found".to_string())),
+    };
+    let reports = report::get_user_ex_list(&db.conn, id).await?;
+
+    // Prefer explicit public URL from env for stability (WR_PUBLIC_URL), fall back to localhost
+    let base = std::env::var("WR_PUBLIC_URL").unwrap_or_else(|_| "http://localhost".to_string());
+
+    let feed = build_rss_feed(&user.name, user.id, &reports, &base);
+
+    // Return with proper RSS content-type
+    Ok((
+        axum::http::StatusCode::OK,
+        [(axum::http::header::CONTENT_TYPE, "application/rss+xml; charset=utf-8")],
+        feed,
+    ))
+}
+
+/// Build RSS 2.0 XML for given user and reports. Description is wrapped in CDATA and
+/// any occurrence of `]]>` inside content is safely split.
+pub fn build_rss_feed(
+    user_name: &str,
+    user_id: i32,
+    reports: &Vec<wr_database::report::ExModel>,
+    base_url: &str,
+) -> String {
+    let mut items = String::new();
+    for r in reports.iter() {
+        let title_text = r.content.as_ref().map(|s| s.as_str()).unwrap_or("(no content)");
+        let title = html_escape::encode_text(title_text);
+        let pub_date = r.date.to_rfc2822();
+    let link = format!("{}/user/{}/report/{}", base_url.trim_end_matches('/'), r.author_id, r.id);
+
+        // Use HTML-escaped description (no CDATA)
+        let desc = html_escape::encode_text(title_text);
+        // Use a non-permalink guid that is unique: report-{id}-{timestamp}
+        let guid_value = format!("report-{}-{}", r.id, r.date.timestamp());
+        items.push_str(&format!(
+            "<item><title>{}</title><link>{}</link><guid isPermaLink=\"false\">{}</guid><pubDate>{}</pubDate><description>{}</description></item>",
+            title, link, guid_value, pub_date, desc
+        ));
+    }
+
+    // include atom namespace and self link for better interoperability
+    format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\"><channel><title>{}'s Reports</title><link>{}/user/{}</link><atom:link href=\"{}/user/{}/feed/\" rel=\"self\" type=\"application/rss+xml\" /><description>RSS feed for user {}</description>{}</channel></rss>",
+        html_escape::encode_text(user_name), base_url.trim_end_matches('/'), user_id, base_url.trim_end_matches('/'), user_id, html_escape::encode_text(user_name), items
+    )
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+
+    #[test]
+    fn build_rss_contains_items_and_rss_root() {
+        let reports = vec![wr_database::report::ExModel {
+            id: 1,
+            author_id: 2,
+            author_name: "Alice".to_string(),
+            week: 20250101,
+            content: Some("Hello world".to_string()),
+            date: Utc::now(),
+        }];
+        let feed = build_rss_feed("Alice", 2, &reports, "https://example.com");
+        assert!(feed.contains("<rss"));
+        assert!(feed.contains("<item>"));
+        assert!(feed.contains("Hello world"));
+    // guid is a non-permalink unique token
+    assert!(feed.contains("report-1-"));
+    // atom self link points to user feed path
+    assert!(feed.contains("/user/2/feed/"));
     }
 }
