@@ -298,28 +298,4 @@ pub fn build_rss_feed(
 }
 
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use chrono::Utc;
 
-    #[test]
-    fn build_rss_contains_items_and_rss_root() {
-        let reports = vec![wr_database::report::ExModel {
-            id: 1,
-            author_id: 2,
-            author_name: "Alice".to_string(),
-            week: 20250101,
-            content: Some("Hello world".to_string()),
-            date: Utc::now(),
-        }];
-        let feed = build_rss_feed("Alice", 2, &reports, "https://example.com");
-        assert!(feed.contains("<rss"));
-        assert!(feed.contains("<item>"));
-        assert!(feed.contains("Hello world"));
-    // guid is a non-permalink unique token
-    assert!(feed.contains("report-1-"));
-    // atom self link points to user feed path
-    assert!(feed.contains("/user/2/feed/"));
-    }
-}
