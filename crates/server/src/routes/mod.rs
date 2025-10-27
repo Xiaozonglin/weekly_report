@@ -305,13 +305,14 @@ pub fn build_rss_feed(
 ) -> String {
     let mut items = String::new();
     for r in reports.iter() {
-        let title_text = r.content.as_ref().map(|s| s.as_str()).unwrap_or("(no content)");
-        let title = html_escape::encode_text(title_text);
+    // Use a concise, fixed title format instead of full content
+    let item_title_text = format!("{}的第{}周周报", r.author_name, r.week);
+    let title = html_escape::encode_text(&item_title_text);
         let pub_date = r.date.to_rfc2822();
     let link = format!("{}/user/{}/report/{}", base_url.trim_end_matches('/'), r.author_id, r.id);
 
         // Use HTML-escaped description (no CDATA)
-        let desc = html_escape::encode_text(title_text);
+    let desc = html_escape::encode_text(r.content.as_ref().map(|s| s.as_str()).unwrap_or("(no content)"));
         // Use a non-permalink guid that is unique: report-{id}-{timestamp}
         let guid_value = format!("report-{}-{}", r.id, r.date.timestamp());
         items.push_str(&format!(
