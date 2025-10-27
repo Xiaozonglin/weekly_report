@@ -22,6 +22,7 @@ use crate::{
     traits::GlobalState,
     ResponseError,
 };
+use sha2::{Digest, Sha256};
 
 pub async fn initialize(state: GlobalState) -> anyhow::Result<Router> {
     let api_router = construct_router(&state);
@@ -241,9 +242,15 @@ async fn get_report(
     }
 }
 
+#[derive(Deserialize)]
+struct FeedQuery {
+    token: Option<String>,
+}
+
 async fn get_user_feed(
     State(ref db): State<Database>,
     axum::extract::Path(id): axum::extract::Path<i32>,
+    Query(query): Query<FeedQuery>,
 ) -> Result<impl IntoResponse, ResponseError> {
     let user = user::get(&db.conn, id).await?;
     let user = match user {
@@ -256,6 +263,29 @@ async fn get_user_feed(
     let base = std::env::var("WR_PUBLIC_URL").unwrap_or_else(|_| "http://localhost".to_string());
 
     let feed = build_rss_feed(&user.name, user.id, &reports, &base);
+
+    // check token: require token param and validate subscriber by SHA256(email)
+    if let Some(token) = query.token {
+        // fetch users and compare hashed email
+        let users = user::get_list(&db.conn, true).await?;
+        let mut ok = false;
+        for u in users {
+            if let Some(email) = u.email.clone() {
+                let mut hasher = Sha256::new();
+                hasher.update(email.as_bytes());
+                let hex = format!("{:x}", hasher.finalize());
+                if hex == token {
+                    ok = true;
+                    break;
+                }
+            }
+        }
+        if !ok {
+            return Err(ResponseError::Unauthorized("invalid token".to_string()));
+        }
+    } else {
+        return Err(ResponseError::Unauthorized("token required".to_string()));
+    }
 
     // Return with proper RSS content-type
     Ok((

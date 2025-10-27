@@ -7,6 +7,8 @@ import LoadingTips from "@widgets/loading-tips";
 import { A, useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import type { HTTPError } from "ky";
 import { Match, Switch, createEffect, createSignal, untrack } from "solid-js";
+import { accountStore } from "@storage/account";
+import { hashToHex } from "@lib/utils/hash";
 
 export default function () {
     const params = useParams();
@@ -56,6 +58,34 @@ export default function () {
                             <A class="px-2" href={`/user/${report()?.author_id}`}>
                                 <span class="icon-[fluent--person-20-regular]" />
                             </A>
+                            <A class="px-2" href={`/week/${report()?.week}`}>
+                                <span class="icon-[fluent--calendar-20-regular]" />
+                            </A>
+                            {/* Copy feed link button */}
+                            <button
+                                class="px-2"
+                                title={t("form.copy")}
+                                onClick={() => {
+                                    try {
+                                        const userEmail = accountStore.user?.email;
+                                        if (!userEmail) {
+                                            addToast({ level: "error", description: "请先登录以获取订阅链接" });
+                                            return;
+                                        }
+                                        const token = hashToHex(new TextEncoder().encode(userEmail));
+                                        const base = (window as any).WR_PUBLIC_URL || window.location.origin;
+                                        const url = `${base.replace(/\/$/, "")}/api/${report()?.author_id}/feed/?token=${token}`;
+                                        navigator.clipboard.writeText(url).then(() => {
+                                            addToast({ level: "success", description: "已复制订阅链接到剪贴板" });
+                                        });
+                                    } catch (e) {
+                                        addToast({ level: "error", description: "复制失败" });
+                                    }
+                                }}
+                            >
+                                <span class="icon-[fluent--rss-20-regular] w-5 h-5" />
+                            </button>
+                            
                             <A class="px-2" href={`/week/${report()?.week}`}>
                                 <span class="icon-[fluent--calendar-20-regular]" />
                             </A>
