@@ -51,6 +51,7 @@ urlencoding = "2.1"
 html-escape = "0.2"
 mime = "0.3"
 sha2 = "0.10"
+uuid = { version = "1", features = ["v4"] }
 
 wr-database = { version = "0.1", path = "../database" }
 

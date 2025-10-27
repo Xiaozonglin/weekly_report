@@ -8,7 +8,7 @@ import { A, useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import type { HTTPError } from "ky";
 import { Match, Switch, createEffect, createSignal, untrack } from "solid-js";
 import { accountStore } from "@storage/account";
-import { hashToHex } from "@lib/utils/hash";
+import { get_self_feed_token } from "@api";
 
 export default function () {
     const params = useParams();
@@ -65,19 +65,22 @@ export default function () {
                             <button
                                 class="px-2"
                                 title={t("form.copy")}
-                                onClick={() => {
+                                onClick={async () => {
                                     try {
-                                        const userEmail = accountStore.user?.email;
-                                        if (!userEmail) {
+                                        if (!accountStore.user) {
                                             addToast({ level: "error", description: "请先登录以获取订阅链接" });
                                             return;
                                         }
-                                        const token = hashToHex(new TextEncoder().encode(userEmail));
+                                        const resp = await get_self_feed_token();
+                                        const token = resp?.token;
+                                        if (!token) {
+                                            addToast({ level: "error", description: "无法获取订阅 token" });
+                                            return;
+                                        }
                                         const base = (window as any).WR_PUBLIC_URL || window.location.origin;
                                         const url = `${base.replace(/\/$/, "")}/api/${report()?.author_id}/feed/?token=${token}`;
-                                        navigator.clipboard.writeText(url).then(() => {
-                                            addToast({ level: "success", description: "已复制订阅链接到剪贴板" });
-                                        });
+                                        await navigator.clipboard.writeText(url);
+                                        addToast({ level: "success", description: "已复制订阅链接到剪贴板" });
                                     } catch (e) {
                                         addToast({ level: "error", description: "复制失败" });
                                     }

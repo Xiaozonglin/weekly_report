@@ -22,7 +22,6 @@ use crate::{
     traits::GlobalState,
     ResponseError,
 };
-use sha2::{Digest, Sha256};
 
 pub async fn initialize(state: GlobalState) -> anyhow::Result<Router> {
     let api_router = construct_router(&state);
@@ -75,6 +74,7 @@ pub fn construct_router(state: &GlobalState) -> Router<GlobalState> {
             state.clone(),
             data::prepare_user_info,
         ))
+        .route("/self/feed_token", get(get_or_create_feed_token))
         .route("/status", get(get_status));
 
     public.merge(protected)
@@ -242,6 +242,8 @@ async fn get_report(
     }
 }
 
+use uuid::Uuid;
+
 #[derive(Deserialize)]
 struct FeedQuery {
     token: Option<String>,
@@ -264,35 +266,47 @@ async fn get_user_feed(
 
     let feed = build_rss_feed(&user.name, user.id, &reports, &base);
 
-    // check token: require token param and validate subscriber by SHA256(email)
-    if let Some(token) = query.token {
-        // fetch users and compare hashed email
-        let users = user::get_list(&db.conn, true).await?;
-        let mut ok = false;
-        for u in users {
-            if let Some(email) = u.email.clone() {
-                let mut hasher = Sha256::new();
-                hasher.update(email.as_bytes());
-                let hex = format!("{:x}", hasher.finalize());
-                if hex == token {
-                    ok = true;
-                    break;
-                }
-            }
+    // check token: require token param and validate that token exists in DB
+    let token = match query.token {
+        Some(t) => t,
+        None => return Err(ResponseError::Unauthorized("token required".to_string())),
+    };
+    let subscriber = user::get_by_feed_token(&db.conn, &token).await?;
+    match subscriber {
+        None => return Err(ResponseError::Unauthorized("invalid token".to_string())),
+        Some(sub) if sub.id != user.id => {
+            // token exists but does not belong to the requested feed owner
+            return Err(ResponseError::Unauthorized("invalid token for this feed".to_string()));
         }
-        if !ok {
-            return Err(ResponseError::Unauthorized("invalid token".to_string()));
-        }
-    } else {
-        return Err(ResponseError::Unauthorized("token required".to_string()));
+        Some(_) => {}
     }
 
     // Return with proper RSS content-type
     Ok((
         axum::http::StatusCode::OK,
-        [(axum::http::header::CONTENT_TYPE, "application/rss+xml; charset=utf-8")],
+        [
+            (axum::http::header::CONTENT_TYPE, "application/rss+xml; charset=utf-8"),
+            (axum::http::header::HeaderName::from_static("referrer-policy"), "no-referrer"),
+            (axum::http::header::HeaderName::from_static("cache-control"), "private, max-age=300"),
+            (axum::http::header::HeaderName::from_static("x-content-type-options"), "nosniff"),
+        ],
         feed,
     ))
+}
+
+async fn get_or_create_feed_token(
+    State(ref db): State<Database>,
+    Extension(current_user): Extension<user::Model>,
+) -> Result<impl IntoResponse, ResponseError> {
+    // if user already has feed_token return it, otherwise create a new one and persist
+    if let Some(token) = current_user.feed_token.clone() {
+        return Ok(Json(serde_json::json!({ "token": token })).into_response());
+    }
+    let mut new_user = current_user.clone();
+    let token = Uuid::new_v4().to_string();
+    new_user.feed_token = Some(token.clone());
+    let updated = user::update(&db.conn, new_user).await?;
+    Ok(Json(serde_json::json!({ "token": updated.feed_token })).into_response())
 }
 
 /// Build RSS 2.0 XML for given user and reports. Description is wrapped in CDATA and

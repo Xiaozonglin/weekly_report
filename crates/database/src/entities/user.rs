@@ -11,6 +11,8 @@ pub struct Model {
     #[sea_orm(column_type = "Text", nullable)]
     pub email: Option<String>,
     #[sea_orm(column_type = "Text", nullable)]
+    pub feed_token: Option<String>,
+    #[sea_orm(column_type = "Text", nullable)]
     pub direction: Option<String>,
     pub level: i32,
     pub is_banned: bool,
@@ -54,6 +56,13 @@ where
         .filter(Column::Email.eq(email.to_string()))
         .one(db)
         .await
+}
+
+pub async fn get_by_feed_token<C>(db: &C, token: &str) -> Result<Option<Model>, DbErr>
+where
+    C: ConnectionTrait,
+{
+    Entity::find().filter(Column::FeedToken.eq(token.to_string())).one(db).await
 }
 
 pub async fn get_list<C>(db: &C, with_hidden: bool) -> Result<Vec<Model>, DbErr>
