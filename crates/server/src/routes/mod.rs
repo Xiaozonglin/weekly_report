@@ -281,6 +281,16 @@ async fn get_user_feed(
         return Err(ResponseError::Unauthorized("subscriber banned".to_string()));
     }
 
+    // Record auth/logging event: who accessed whose feed and when. Do NOT log the token.
+    tracing::info!(
+        subscriber_id = subscriber.id,
+        subscriber_name = %subscriber.name,
+        author_id = user.id,
+        author_name = %user.name,
+        time = %Utc::now().to_rfc3339(),
+        "rss feed access"
+    );
+
     // Return with proper RSS content-type
     Ok((
         axum::http::StatusCode::OK,
