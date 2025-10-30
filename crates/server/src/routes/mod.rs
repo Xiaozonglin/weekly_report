@@ -59,23 +59,31 @@ pub fn construct_router(state: &GlobalState) -> Router<GlobalState> {
     let public = Router::new().route("/{id}/feed/", get(get_user_feed));
 
     // protected routes (may apply middleware)
-    let protected = Router::new()
+    // Admin-only routes: put under a small admin router that will be merged into protected
+    let admin_router = Router::new()
         .route("/import", post(import_users))
         .route("/user", patch(modify_user))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth::admin_required,
-        ))
+        ));
+
+    // Protected routes: first construct routes (including merging admin routes),
+    // then apply the prepare_user_info middleware so it attaches Extension<user::Model>
+    // for all protected endpoints (including admin routes which still have their
+    // own admin_required middleware).
+    let protected = Router::new()
+        .merge(admin_router)
         .route("/user", get(get_user))
         .route("/report", get(get_report).post(handle_submit))
         .route("/self", get(get_self_info))
         .route("/ping", get(ping))
+        .route("/self/feed_token", get(get_or_create_feed_token))
+        .route("/status", get(get_status))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             data::prepare_user_info,
-        ))
-        .route("/self/feed_token", get(get_or_create_feed_token))
-        .route("/status", get(get_status));
+        ));
 
     public.merge(protected)
 }
