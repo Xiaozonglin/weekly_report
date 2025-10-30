@@ -80,7 +80,7 @@ export default function () {
                                         const base = (window as any).WR_PUBLIC_URL || window.location.origin;
                                         const url = `${base.replace(/\/$/, "")}/api/${report()?.author_id}/feed/?token=${token}`;
                                         await navigator.clipboard.writeText(url);
-                                        addToast({ level: "success", description: "已复制订阅链接到剪贴板" });
+                                        addToast({ level: "success", description: "已复制订阅链接到剪贴板", duration: 5000, });
                                     } catch (e) {
                                         addToast({ level: "error", description: "复制失败" });
                                     }
