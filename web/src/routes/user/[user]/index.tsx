@@ -68,7 +68,7 @@ export default function () {
                                 onClick={async () => {
                                     try {
                                         if (!accountStore.user) {
-                                            addToast({ level: "error", description: "请先登录以获取订阅链接" });
+                                            addToast({ level: "error", description: "请先登录以获取订阅链接", duration: 5000, });
                                             return;
                                         }
                                         const resp = await get_self_feed_token();
