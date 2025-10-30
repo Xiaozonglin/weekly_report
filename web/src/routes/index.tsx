@@ -3,7 +3,7 @@ import type { User } from "@models/user";
 import { Title } from "@storage/header";
 import { t } from "@storage/theme";
 import { addToast } from "@storage/toast";
-import { getCurrentWeek } from "@utils/time";
+import { getCurrentWeek } from "@lib/utils/time";
 import Link from "@widgets/link";
 import LoadingTips from "@widgets/loading-tips";
 import type { HTTPError } from "ky";

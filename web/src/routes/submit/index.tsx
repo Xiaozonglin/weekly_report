@@ -3,7 +3,7 @@ import { accountStore } from "@storage/account";
 import { Title } from "@storage/header";
 import { t } from "@storage/theme";
 import { addToast } from "@storage/toast";
-import { getCurrentWeek } from "@utils/time";
+import { getCurrentWeek } from "@lib/utils/time";
 import Button from "@widgets/button";
 import Card from "@widgets/card";
 import Editor from "@widgets/editor";
