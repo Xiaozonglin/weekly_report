@@ -82,7 +82,7 @@ export default function () {
                                         await navigator.clipboard.writeText(url);
                                         addToast({ level: "success", description: "已复制订阅链接到剪贴板", duration: 5000, });
                                     } catch (e) {
-                                        addToast({ level: "error", description: "复制失败" });
+                                        addToast({ level: "error", description: "复制失败", duration: 5000, });
                                     }
                                 }}
                             >
