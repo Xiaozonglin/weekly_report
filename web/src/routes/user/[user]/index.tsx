@@ -74,7 +74,7 @@ export default function () {
                                         const resp = await get_self_feed_token();
                                         const token = resp?.token;
                                         if (!token) {
-                                            addToast({ level: "error", description: "无法获取订阅 token" });
+                                            addToast({ level: "error", description: "无法获取订阅 token", duration: 5000, });
                                             return;
                                         }
                                         const base = (window as any).WR_PUBLIC_URL || window.location.origin;
