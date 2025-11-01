@@ -344,7 +344,7 @@ pub fn build_rss_feed(
     let link = format!("{}/user/{}/report/{}", base_url.trim_end_matches('/'), r.author_id, r.id);
 
         // Use HTML-escaped description (no CDATA)
-    let desc = html_escape::encode_text(r.content.as_ref().map(|s| s.as_str()).unwrap_or("(no content)"));
+    let desc = html_escape::encode_text(r.content.as_deref()).unwrap_or("(no content)"));
         // Use a non-permalink guid that is unique: report-{id}-{timestamp}
         let guid_value = format!("report-{}-{}", r.id, r.date.timestamp());
         items.push_str(&format!(
