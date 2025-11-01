@@ -81,4 +81,13 @@
   "report": {
     "title": "{{user}} 的第 {{week}} 周周报"
   }
+  ,
+  "feed": {
+    "needLogin": "请先登录以获取订阅链接",
+    "tokenFetchFailed": "无法获取订阅 token",
+    "invalidAuthor": "无效的作者信息",
+    "devFallback": "未登录，使用本地调试订阅链接",
+    "copied": "已复制订阅链接到剪贴板",
+    "copyFailed": "复制失败"
+  }
 }

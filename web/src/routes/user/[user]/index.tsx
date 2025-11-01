@@ -20,7 +20,7 @@ export default function () {
         if (params.user && searchParams.week) {
             untrack(() => {
                 const user = Number.parseInt(params.user);
-                const week = Number.parseInt(searchParams.week!);
+                const week = Number.parseInt(Array.isArray(searchParams.week) ? searchParams.week[0] : (searchParams.week as string));
                 if (!user || !week) {
                     navigate("/sigtrap/404");
                 }
@@ -67,22 +67,32 @@ export default function () {
                                 title={t("form.copy")}
                                 onClick={async () => {
                                     try {
-                                        if (!accountStore.user) {
-                                            addToast({ level: "error", description: "请先登录以获取订阅链接", duration: 5000, });
-                                            return;
-                                        }
-                                        const resp = await get_self_feed_token();
-                                        const token = resp?.token;
-                                        if (!token) {
-                                            addToast({ level: "error", description: "无法获取订阅 token", duration: 5000, });
-                                            return;
-                                        }
                                         const base = (window as any).WR_PUBLIC_URL || window.location.origin;
-                                        const url = `${base.replace(/\/$/, "")}/api/${report()?.author_id}/feed/?token=${token}`;
+                                        const authorId = report()?.author_id;
+                                        if (!authorId) {
+                                            addToast({ level: "error", description: t("feed.invalidAuthor") ?? "", duration: 5000 });
+                                            return;
+                                        }
+                                        let url: string;
+                                        if (accountStore.user) {
+                                            const resp = await get_self_feed_token();
+                                            const token = resp?.token;
+                                            if (!token) {
+                                                addToast({ level: "error", description: t("feed.tokenFetchFailed") ?? "", duration: 5000 });
+                                                return;
+                                            }
+                                            url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?token=${token}`;
+                                        } else {
+                                            // Local dev fallback: do not redirect to external auth, use debug subscriber name
+                                            const envSub = (import.meta.env.VITE_DEV_SUBSCRIBER as string) || "linlinzzo";
+                                            const subscriberName = encodeURIComponent(envSub);
+                                            url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?subscriber_name=${subscriberName}`;
+                                            addToast({ level: "info", description: t("feed.devFallback") ?? "", duration: 5000 });
+                                        }
                                         await navigator.clipboard.writeText(url);
-                                        addToast({ level: "success", description: "已复制订阅链接到剪贴板", duration: 5000, });
+                                        addToast({ level: "success", description: t("feed.copied") ?? "", duration: 5000 });
                                     } catch (e) {
-                                        addToast({ level: "error", description: "复制失败", duration: 5000, });
+                                        addToast({ level: "error", description: t("feed.copyFailed") ?? "", duration: 5000 });
                                     }
                                 }}
                             >

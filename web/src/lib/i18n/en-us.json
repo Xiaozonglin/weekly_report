@@ -81,4 +81,13 @@
   "report": {
     "title": "Weekly report {{week}} for {{user}}"
   }
+  ,
+  "feed": {
+    "needLogin": "Please log in to get subscription link",
+    "tokenFetchFailed": "Unable to obtain subscription token",
+    "invalidAuthor": "Invalid author information",
+    "devFallback": "Not logged in — using local debug subscriber link",
+    "copied": "Subscription link copied to clipboard",
+    "copyFailed": "Copy failed"
+  }
 }
