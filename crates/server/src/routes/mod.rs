@@ -324,7 +324,7 @@ async fn get_or_create_feed_token(
     let token = Uuid::new_v4().to_string();
     new_user.feed_token = Some(token.clone());
     let updated = user::update(&db.conn, new_user).await?;
-    Ok(Json(serde_json::json!({ "token": updated.feed_token })).into_response())
+    Ok(Json(serde_json::json!({ "token": updated.feed_token })))
 }
 
 /// Build RSS 2.0 XML for given user and reports. Description is wrapped in CDATA and
