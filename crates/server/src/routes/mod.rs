@@ -16,6 +16,7 @@ use tower_http::{
 };
 use tracing::{debug, debug_span, Span};
 use wr_database::{report, user, Database};
+use wr_database::report::ExModel;
 
 use crate::{
     middleware::{auth, data, forwarded},
@@ -332,7 +333,7 @@ async fn get_or_create_feed_token(
 pub fn build_rss_feed(
     user_name: &str,
     user_id: i32,
-    reports: &[wr_database::report::ExModel],
+    reports: &[ExModel],
     base_url: &str,
 ) -> String {
     let mut items = String::new();
@@ -344,7 +345,7 @@ pub fn build_rss_feed(
     let link = format!("{}/user/{}/report/{}", base_url.trim_end_matches('/'), r.author_id, r.id);
 
         // Use HTML-escaped description (no CDATA)
-    let desc = html_escape::encode_text(r.content.as_deref()).unwrap_or("(no content)"));
+    let desc = html_escape::encode_text(r.content.as_deref().unwrap_or("(no content)"));
         // Use a non-permalink guid that is unique: report-{id}-{timestamp}
         let guid_value = format!("report-{}-{}", r.id, r.date.timestamp());
         items.push_str(&format!(
