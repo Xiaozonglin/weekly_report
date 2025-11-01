@@ -332,7 +332,7 @@ async fn get_or_create_feed_token(
 pub fn build_rss_feed(
     user_name: &str,
     user_id: i32,
-    reports: &Vec<wr_database::report::ExModel>,
+    reports: &[wr_database::report::ExModel],
     base_url: &str,
 ) -> String {
     let mut items = String::new();
