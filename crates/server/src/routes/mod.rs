@@ -318,7 +318,7 @@ async fn get_or_create_feed_token(
 ) -> Result<impl IntoResponse, ResponseError> {
     // if user already has feed_token return it, otherwise create a new one and persist
     if let Some(token) = current_user.feed_token.clone() {
-        return Ok(Json(serde_json::json!({ "token": token })).into_response());
+        return Ok(Json(serde_json::json!({ "token": token })));
     }
     let mut new_user = current_user.clone();
     let token = Uuid::new_v4().to_string();
