@@ -70,7 +70,7 @@ export default function () {
                                         const base = location.origin;
                                         const authorId = report()?.author_id;
                                         if (!authorId) {
-                                            addToast({ level: "error", description: t("feed.invalidAuthor") ?? "", duration: 5000 });
+                                            addToast({ level: "error", description: t("feed.invalidAuthor")!, duration: 5000 });
                                             return;
                                         }
                                         let url: string;
@@ -78,7 +78,7 @@ export default function () {
                                             const resp = await get_self_feed_token();
                                             const token = resp?.token;
                                             if (!token) {
-                                                addToast({ level: "error", description: t("feed.tokenFetchFailed") ?? "", duration: 5000 });
+                                                addToast({ level: "error", description: t("feed.tokenFetchFailed")!, duration: 5000 });
                                                 return;
                                             }
                                             url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?token=${token}`;
@@ -87,12 +87,12 @@ export default function () {
                                             const envSub = (import.meta.env.VITE_DEV_SUBSCRIBER as string) || "linlinzzo";
                                             const subscriberName = encodeURIComponent(envSub);
                                             url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?subscriber_name=${subscriberName}`;
-                                            addToast({ level: "info", description: t("feed.devFallback") ?? "", duration: 5000 });
+                                            addToast({ level: "info", description: t("feed.devFallback")!, duration: 5000 });
                                         }
                                         await navigator.clipboard.writeText(url);
-                                        addToast({ level: "success", description: t("feed.copied") ?? "", duration: 5000 });
+                                        addToast({ level: "success", description: t("feed.copied")!, duration: 5000 });
                                     } catch (e) {
-                                        addToast({ level: "error", description: t("feed.copyFailed") ?? "", duration: 5000 });
+                                        addToast({ level: "error", description: t("feed.copyFailed")!, duration: 5000 });
                                     }
                                 }}
                             >
