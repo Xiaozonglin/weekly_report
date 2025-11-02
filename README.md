@@ -1,6 +1,6 @@
 # XDSEC Weekly Report
 
-@2024 XDSEC Developers
+(C) 2024-now XDSEC Developers
 
 ## 项目目录结构概览
 
