@@ -351,7 +351,7 @@ pub fn build_rss_feed(
     let mut items = String::new();
     for r in reports.iter() {
     // Use a concise, fixed title format instead of full content
-    let item_title_text = format!(r.title, r.author_name, r.week);
+    let item_title_text = format!("{}的第{}周周报", r.author_name, r.week);
     let title = html_escape::encode_text(&item_title_text);
         let pub_date = r.date.to_rfc2822();
     let link = format!("{}/user/{}/report/{}", base_url.trim_end_matches('/'), r.author_id, r.id);
