@@ -90,7 +90,7 @@ export default function () {
                                             addToast({ level: "info", description: t("feed.devFallback")!, duration: 5000 });
                                         }
                                         await navigator.clipboard.writeText(url);
-                                        addToast({ level: "success", description: t("feed.copied") ?? "", duration: 5000 });
+                                        addToast({ level: "success", description: t("feed.copied")!, duration: 5000 });
                                     } catch (e) {
                                         addToast({ level: "error", description: t("feed.copyFailed") ?? "", duration: 5000 });
                                     }
