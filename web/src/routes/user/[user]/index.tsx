@@ -92,7 +92,7 @@ export default function () {
                                         await navigator.clipboard.writeText(url);
                                         addToast({ level: "success", description: t("feed.copied")!, duration: 5000 });
                                     } catch (e) {
-                                        addToast({ level: "error", description: t("feed.copyFailed") ?? "", duration: 5000 });
+                                        addToast({ level: "error", description: t("feed.copyFailed")!, duration: 5000 });
                                     }
                                 }}
                             >
