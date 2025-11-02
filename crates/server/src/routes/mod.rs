@@ -79,7 +79,7 @@ pub fn construct_router(state: &GlobalState) -> Router<GlobalState> {
         .route("/report", get(get_report).post(handle_submit))
         .route("/self", get(get_self_info))
         .route("/ping", get(ping))
-        .route("/self/feed_token", get(get_or_create_feed_token))
+    .route("/self/feed_token", get(get_or_create_feed_token).post(regenerate_feed_token))
         .route("/status", get(get_status))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
@@ -321,6 +321,18 @@ async fn get_or_create_feed_token(
     if let Some(token) = current_user.feed_token.clone() {
         return Ok(Json(serde_json::json!({ "token": token })));
     }
+    let mut new_user = current_user.clone();
+    let token = Uuid::new_v4().to_string();
+    new_user.feed_token = Some(token.clone());
+    let updated = user::update(&db.conn, new_user).await?;
+    Ok(Json(serde_json::json!({ "token": updated.feed_token })))
+}
+
+// Regenerate (reset) the current user's feed token. Protected endpoint.
+async fn regenerate_feed_token(
+    State(ref db): State<Database>,
+    Extension(current_user): Extension<user::Model>,
+) -> Result<impl IntoResponse, ResponseError> {
     let mut new_user = current_user.clone();
     let token = Uuid::new_v4().to_string();
     new_user.feed_token = Some(token.clone());

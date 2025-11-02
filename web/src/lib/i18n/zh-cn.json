@@ -88,6 +88,10 @@
     "invalidAuthor": "无效的作者信息",
     "devFallback": "未登录，使用本地调试订阅链接",
     "copied": "已复制订阅链接到剪贴板",
-    "copyFailed": "复制失败"
+    "copyFailed": "复制失败",
+    "reset": "重置订阅 Token",
+    "settings": "订阅设置",
+    "settingsIntro": "在此你可以管理订阅 Token（重置将使旧链接失效）",
+    "resetSuccess": "订阅 token 已重置"
   }
 }

@@ -88,6 +88,10 @@
     "invalidAuthor": "Invalid author information",
     "devFallback": "Not logged in — using local debug subscriber link",
     "copied": "Subscription link copied to clipboard",
-    "copyFailed": "Copy failed"
+    "copyFailed": "Copy failed",
+    "reset": "Reset subscription token",
+    "settings": "Subscription settings",
+    "settingsIntro": "Manage your subscription token here (reset will invalidate existing links)",
+    "resetSuccess": "Subscription token has been reset"
   }
 }
