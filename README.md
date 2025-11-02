@@ -61,7 +61,7 @@
 - `WR_PORT`（必需）
 	- 说明：服务监听的端口
 
-- `WR_PUBLIC_URL`（可选，后端）
+- `WR_PUBLIC_URL`（可选）
 	- 说明：后端用于生成站点级绝对链接（例如 RSS feed 中的 self 链接或在服务端构造的 URL）的基准公开地址。该值应设置为你的站点对外可访问的完整根 URL（例如 `https://weekly.example.com`）。
 	- 默认：如果未设置，服务在代码中回退到 `http://localhost`（见 `crates/server/src/routes/mod.rs` 中的处理）。
 	- 注意：请在生产环境中设置该值以确保 feed 中的链接与真实域名一致；设置时通常不需要尾部斜杠（代码会安全地去除尾斜杠）。
