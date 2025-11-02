@@ -87,7 +87,7 @@ export default function () {
                                             const envSub = (import.meta.env.VITE_DEV_SUBSCRIBER as string) || "linlinzzo";
                                             const subscriberName = encodeURIComponent(envSub);
                                             url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?subscriber_name=${subscriberName}`;
-                                            addToast({ level: "info", description: t("feed.devFallback") ?? "", duration: 5000 });
+                                            addToast({ level: "info", description: t("feed.devFallback")!, duration: 5000 });
                                         }
                                         await navigator.clipboard.writeText(url);
                                         addToast({ level: "success", description: t("feed.copied") ?? "", duration: 5000 });
