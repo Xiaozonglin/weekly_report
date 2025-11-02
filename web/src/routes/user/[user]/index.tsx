@@ -70,7 +70,7 @@ export default function () {
                                         const base = (window as any).WR_PUBLIC_URL || window.location.origin;
                                         const authorId = report()?.author_id;
                                         if (!authorId) {
-                                            addToast({ level: "error", description: t("feed.invalidAuthor") ?? "", duration: 5000 });
+                                            addToast({ level: "error", description: t("feed.invalidAuthor")!, duration: 5000 });
                                             return;
                                         }
                                         let url: string;
