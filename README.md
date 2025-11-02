@@ -84,13 +84,6 @@ $env:WR_STATIC = 'C:\Users\you\path\to\weekly_report\web'
 $env:RUST_LOG = 'info'
 ```
 
-前端请在 `web/` 目录创建一个 `.env` 文件（仅示例，不要提交敏感值）：
-
-```text
-# 可选：
-# VITE_PUBLIC_URL=http://127.0.0.1:5173
-```
-
 然后在不同终端分别启动后端与前端：
 
 ```powershell
