@@ -32,6 +32,14 @@ export async function get_self() {
     return await api.get(`${api_root}/self`).json<User>();
 }
 
+export async function get_self_feed_token() {
+    return await api.get(`${api_root}/self/feed_token`).json<{ token: string }>();
+}
+
+export async function regenerate_self_feed_token() {
+    return await api.post(`${api_root}/self/feed_token`).json<{ token: string }>();
+}
+
 export async function get_user_list(hidden: boolean) {
     return await api.get(`${api_root}/user?with_hidden=${hidden}`).json<User[]>();
 }

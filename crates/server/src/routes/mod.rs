@@ -16,6 +16,7 @@ use tower_http::{
 };
 use tracing::{debug, debug_span, Span};
 use wr_database::{report, user, Database};
+use wr_database::report::ExModel;
 
 use crate::{
     middleware::{auth, data, forwarded},
@@ -55,22 +56,37 @@ pub async fn initialize(state: GlobalState) -> anyhow::Result<Router> {
 }
 
 pub fn construct_router(state: &GlobalState) -> Router<GlobalState> {
-    Router::new()
+    // public routes (no auth required)
+    let public = Router::new().route("/{id}/feed/", get(get_user_feed));
+
+    // protected routes (may apply middleware)
+    // Admin-only routes: put under a small admin router that will be merged into protected
+    let admin_router = Router::new()
         .route("/import", post(import_users))
         .route("/user", patch(modify_user))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             auth::admin_required,
-        ))
+        ));
+
+    // Protected routes: first construct routes (including merging admin routes),
+    // then apply the prepare_user_info middleware so it attaches Extension<user::Model>
+    // for all protected endpoints (including admin routes which still have their
+    // own admin_required middleware).
+    let protected = Router::new()
+        .merge(admin_router)
         .route("/user", get(get_user))
         .route("/report", get(get_report).post(handle_submit))
         .route("/self", get(get_self_info))
         .route("/ping", get(ping))
+    .route("/self/feed_token", get(get_or_create_feed_token).post(regenerate_feed_token))
+        .route("/status", get(get_status))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             data::prepare_user_info,
-        ))
-        .route("/status", get(get_status))
+        ));
+
+    public.merge(protected)
 }
 
 async fn ping() -> impl IntoResponse {
@@ -234,3 +250,128 @@ async fn get_report(
         }
     }
 }
+
+use uuid::Uuid;
+
+#[derive(Deserialize)]
+struct FeedQuery {
+    token: Option<String>,
+}
+
+async fn get_user_feed(
+    State(ref db): State<Database>,
+    axum::extract::Path(id): axum::extract::Path<i32>,
+    Query(query): Query<FeedQuery>,
+) -> Result<impl IntoResponse, ResponseError> {
+    let user = user::get(&db.conn, id).await?;
+    let user = match user {
+        Some(u) => u,
+        None => return Err(ResponseError::NotFound("user not found".to_string())),
+    };
+    let reports = report::get_user_ex_list(&db.conn, id).await?;
+
+    // Prefer explicit public URL from env for stability (WR_PUBLIC_URL), fall back to localhost
+    let base = std::env::var("WR_PUBLIC_URL").unwrap_or_else(|_| "http://localhost".to_string());
+
+    let feed = build_rss_feed(&user.name, user.id, &reports, &base);
+
+    // check token: require token param and validate that token exists in DB
+    let token = match query.token {
+        Some(t) => t,
+        None => return Err(ResponseError::Unauthorized("token required".to_string())),
+    };
+    let subscriber = user::get_by_feed_token(&db.conn, &token).await?;
+    let subscriber = match subscriber {
+        None => return Err(ResponseError::Unauthorized("invalid token".to_string())),
+        Some(s) => s,
+    };
+    // Deny access for banned subscribers
+    if subscriber.is_banned {
+        return Err(ResponseError::Unauthorized("subscriber banned".to_string()));
+    }
+
+    // Record auth/logging event: who accessed whose feed and when. Do NOT log the token.
+    tracing::info!(
+        subscriber_id = subscriber.id,
+        subscriber_name = %subscriber.name,
+        author_id = user.id,
+        author_name = %user.name,
+        time = %Utc::now().to_rfc3339(),
+        "rss feed access"
+    );
+
+    // Return with proper RSS content-type
+    Ok((
+        axum::http::StatusCode::OK,
+        [
+            (axum::http::header::CONTENT_TYPE, "application/rss+xml; charset=utf-8"),
+            (axum::http::header::HeaderName::from_static("referrer-policy"), "no-referrer"),
+            (axum::http::header::HeaderName::from_static("cache-control"), "private, max-age=300"),
+            (axum::http::header::HeaderName::from_static("x-content-type-options"), "nosniff"),
+        ],
+        feed,
+    ))
+}
+
+async fn get_or_create_feed_token(
+    State(ref db): State<Database>,
+    Extension(current_user): Extension<user::Model>,
+) -> Result<impl IntoResponse, ResponseError> {
+    // if user already has feed_token return it, otherwise create a new one and persist
+    if let Some(token) = current_user.feed_token.clone() {
+        return Ok(Json(serde_json::json!({ "token": token })));
+    }
+    let mut new_user = current_user.clone();
+    let token = Uuid::new_v4().to_string();
+    new_user.feed_token = Some(token.clone());
+    let updated = user::update(&db.conn, new_user).await?;
+    Ok(Json(serde_json::json!({ "token": updated.feed_token })))
+}
+
+// Regenerate (reset) the current user's feed token. Protected endpoint.
+async fn regenerate_feed_token(
+    State(ref db): State<Database>,
+    Extension(current_user): Extension<user::Model>,
+) -> Result<impl IntoResponse, ResponseError> {
+    let mut new_user = current_user.clone();
+    let token = Uuid::new_v4().to_string();
+    new_user.feed_token = Some(token.clone());
+    let updated = user::update(&db.conn, new_user).await?;
+    Ok(Json(serde_json::json!({ "token": updated.feed_token })))
+}
+
+/// Build RSS 2.0 XML for given user and reports. Description is wrapped in CDATA and
+/// any occurrence of `]]>` inside content is safely split.
+pub fn build_rss_feed(
+    user_name: &str,
+    user_id: i32,
+    reports: &[ExModel],
+    base_url: &str,
+) -> String {
+    let mut items = String::new();
+    for r in reports.iter() {
+    // Use a concise, fixed title format instead of full content
+    let item_title_text = format!("{}的第{}周周报", r.author_name, r.week);
+    let title = html_escape::encode_text(&item_title_text);
+        let pub_date = r.date.to_rfc2822();
+    let link = format!("{}/user/{}/report/{}", base_url.trim_end_matches('/'), r.author_id, r.id);
+
+        // Use HTML-escaped description (no CDATA)
+    let desc = html_escape::encode_text(r.content.as_deref().unwrap_or("(no content)"));
+        // Use a non-permalink guid that is unique: report-{id}-{timestamp}
+        let guid_value = format!("report-{}-{}", r.id, r.date.timestamp());
+        items.push_str(&format!(
+            "<item><title>{}</title><link>{}</link><guid isPermaLink=\"false\">{}</guid><pubDate>{}</pubDate><description>{}</description></item>",
+            title, link, guid_value, pub_date, desc
+        ));
+    }
+
+    // include atom namespace and self link for better interoperability
+    format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\"><channel><title>{}'s Reports</title><link>{}/user/{}</link><atom:link href=\"{}/user/{}/feed/\" rel=\"self\" type=\"application/rss+xml\" /><description>RSS feed for user {}</description>{}</channel></rss>",
+        html_escape::encode_text(user_name), base_url.trim_end_matches('/'), user_id, base_url.trim_end_matches('/'), user_id, html_escape::encode_text(user_name), items
+    )
+}
+
+
+

@@ -7,6 +7,8 @@ import LoadingTips from "@widgets/loading-tips";
 import { A, useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import type { HTTPError } from "ky";
 import { Match, Switch, createEffect, createSignal, untrack } from "solid-js";
+import { accountStore } from "@storage/account";
+import { get_self_feed_token, regenerate_self_feed_token } from "@api";
 
 export default function () {
     const params = useParams();
@@ -18,7 +20,7 @@ export default function () {
         if (params.user && searchParams.week) {
             untrack(() => {
                 const user = Number.parseInt(params.user);
-                const week = Number.parseInt(searchParams.week!);
+                const week = Number.parseInt(Array.isArray(searchParams.week) ? searchParams.week[0] : (searchParams.week as string));
                 if (!user || !week) {
                     navigate("/sigtrap/404");
                 }
@@ -59,6 +61,42 @@ export default function () {
                             <A class="px-2" href={`/week/${report()?.week}`}>
                                 <span class="icon-[fluent--calendar-20-regular]" />
                             </A>
+                            {/* Copy feed link button */}
+                            <button
+                                class="px-2"
+                                title={t("form.copy")}
+                                onClick={async () => {
+                                    try {
+                                        const base = location.origin;
+                                        const authorId = report()?.author_id;
+                                        if (!authorId) {
+                                            addToast({ level: "error", description: t("feed.invalidAuthor")!, duration: 5000 });
+                                            return;
+                                        }
+                                        let url: string;
+                                        if (accountStore.user) {
+                                            const resp = await get_self_feed_token();
+                                            const token = resp?.token;
+                                            if (!token) {
+                                                addToast({ level: "error", description: t("feed.tokenFetchFailed")!, duration: 5000 });
+                                                return;
+                                            }
+                                            url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?token=${token}`;
+                                        } else {
+                                            const envSub = (import.meta.env.VITE_DEV_SUBSCRIBER as string) || "linlinzzo";
+                                            const subscriberName = encodeURIComponent(envSub);
+                                            url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?subscriber_name=${subscriberName}`;
+                                            addToast({ level: "info", description: t("feed.devFallback")!, duration: 5000 });
+                                        }
+                                        await navigator.clipboard.writeText(url);
+                                        addToast({ level: "success", description: t("feed.copied")!, duration: 5000 });
+                                    } catch (e) {
+                                        addToast({ level: "error", description: t("feed.copyFailed")!, duration: 5000 });
+                                    }
+                                }}
+                            >
+                                <span class="icon-[fluent--rss-20-regular] w-5 h-5" />
+                            </button>
                         </h1>
                         <Article extra headingAnchors content={report()?.content || ""} />
                     </div>
