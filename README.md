@@ -103,9 +103,3 @@ cd C:\Users\you\path\to\weekly_report\web
 npm install
 npm run dev
 ```
-
-### 这些变量影响了哪些功能
-
-- `DATABASE_URL`：影响所有依赖数据库的功能（周报、用户、feed token）。
-- `VITE_DEV_SUBSCRIBER`：仅影响前端在未登录时生成的调试订阅链接。
-- `VITE_PUBLIC_URL` / `location.origin`：影响前端构造绝对链接的方式；当前代码默认使用 `location.origin`。
