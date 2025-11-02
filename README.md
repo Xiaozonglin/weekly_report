@@ -66,12 +66,6 @@
 	- 默认：如果未设置，服务在代码中回退到 `http://localhost`（见 `crates/server/src/routes/mod.rs` 中的处理）。
 	- 注意：请在生产环境中设置该值以确保 feed 中的链接与真实域名一致；设置时通常不需要尾部斜杠（代码会安全地去除尾斜杠）。
 
-### 前端（web / Vite）
-
-前端变量必须以 `VITE_` 前缀命名才能被 Vite 注入。
-
-
-
 ### 本地开发示例（PowerShell）
 
 在启动后端和前端前，可在当前 PowerShell 会话中临时设置：
