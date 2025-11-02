@@ -78,7 +78,7 @@ export default function () {
                                             const resp = await get_self_feed_token();
                                             const token = resp?.token;
                                             if (!token) {
-                                                addToast({ level: "error", description: t("feed.tokenFetchFailed") ?? "", duration: 5000 });
+                                                addToast({ level: "error", description: t("feed.tokenFetchFailed")!, duration: 5000 });
                                                 return;
                                             }
                                             url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?token=${token}`;
