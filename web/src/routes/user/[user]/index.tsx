@@ -67,7 +67,7 @@ export default function () {
                                 title={t("form.copy")}
                                 onClick={async () => {
                                     try {
-                                        const base = (window as any).WR_PUBLIC_URL || window.location.origin;
+                                        const base = location.origin;
                                         const authorId = report()?.author_id;
                                         if (!authorId) {
                                             addToast({ level: "error", description: t("feed.invalidAuthor") ?? "", duration: 5000 });
