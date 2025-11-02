@@ -9,9 +9,6 @@ import type { HTTPError } from "ky";
 import { Match, Switch, createEffect, createSignal, untrack } from "solid-js";
 import { accountStore } from "@storage/account";
 import { get_self_feed_token, regenerate_self_feed_token } from "@api";
-import Dialog from "@widgets/dialog";
-import Button from "@widgets/button";
-import Icon from "@widgets/icon";
 
 export default function () {
     const params = useParams();
@@ -86,7 +83,6 @@ export default function () {
                                             }
                                             url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?token=${token}`;
                                         } else {
-                                            // Local dev fallback: do not redirect to external auth, use debug subscriber name
                                             const envSub = (import.meta.env.VITE_DEV_SUBSCRIBER as string) || "linlinzzo";
                                             const subscriberName = encodeURIComponent(envSub);
                                             url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?subscriber_name=${subscriberName}`;
@@ -101,60 +97,6 @@ export default function () {
                             >
                                 <span class="icon-[fluent--rss-20-regular] w-5 h-5" />
                             </button>
-                            {
-                                // Show reset token control only to the owner of the report
-                                accountStore.user && accountStore.user.id === report()?.author_id ? (
-                                    (() => {
-                                        const [open, setOpen] = createSignal(false);
-                                        return (
-                                            <Dialog
-                                                class="px-2"
-                                                title={t("feed.settings")}
-                                                btnContent={<Icon name="settings" class="w-5 h-5" />}
-                                                open={open()}
-                                                onOpenChange={(d: any) => setOpen(typeof d === "boolean" ? d : !!d?.open)}
-                                            >
-                                                <div class="space-y-4">
-                                                    <p class="text-sm text-muted">{t("feed.settingsIntro")}</p>
-                                                    <div class="flex items-center justify-end space-x-2">
-                                                        <Button size="sm" ghost onClick={() => setOpen(false)}>
-                                                            {t("platform.reject")}
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            level="primary"
-                                                            onClick={async () => {
-                                                                try {
-                                                                    const resp = await regenerate_self_feed_token();
-                                                                    const token = resp?.token;
-                                                                    if (!token) {
-                                                                        addToast({ level: "error", description: t("feed.tokenFetchFailed")!, duration: 5000 });
-                                                                        return;
-                                                                    }
-                                                                    const base = location.origin;
-                                                                    const authorId = report()?.author_id;
-                                                                    const url = `${base.replace(/\/$/, "")}/api/${authorId}/feed/?token=${token}`;
-                                                                    await navigator.clipboard.writeText(url);
-                                                                    addToast({ level: "success", description: t("feed.resetSuccess")!, duration: 5000 });
-                                                                    setOpen(false);
-                                                                } catch (e) {
-                                                                    addToast({ level: "error", description: t("feed.copyFailed")!, duration: 5000 });
-                                                                }
-                                                            }}
-                                                        >
-                                                            {t("feed.reset")}
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </Dialog>
-                                        );
-                                    })()
-                                ) : null
-                            }
-                            
-                            <A class="px-2" href={`/week/${report()?.week}`}>
-                                <span class="icon-[fluent--calendar-20-regular]" />
-                            </A>
                         </h1>
                         <Article extra headingAnchors content={report()?.content || ""} />
                     </div>
