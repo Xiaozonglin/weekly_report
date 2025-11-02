@@ -75,8 +75,6 @@
 前端变量必须以 `VITE_` 前缀命名才能被 Vite 注入。
 
 
-- `VITE_PUBLIC_URL`（可选）
-	- 说明：如果你希望在构建时固定一个站点的公开 URL，可以设置该变量。当前项目前端在运行时默认使用 `location.origin`，仅在需要构建时固定 canonical URL 的场景下设置该变量。
 
 ### 本地开发示例（PowerShell）
 
