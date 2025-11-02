@@ -6,7 +6,7 @@ import { accountStore } from "@storage/account";
 import { Show } from "solid-js";
 import { get_self_feed_token, regenerate_self_feed_token } from "@api";
 import Button from "@widgets/button";
-import Icon from "@widgets/icon";
+
 
 export default function () {
     const randomTips = [
@@ -28,7 +28,7 @@ export default function () {
                 <p class="opacity-60">{randomTips[Math.floor(Math.random() * randomTips.length)]}</p>
                 <div class="w-full max-w-2xl mt-6 p-4 border rounded-md bg-card/40">
                     <h2 class="font-semibold mb-2 flex items-center space-x-2">
-                        <Icon name="settings" class="w-5 h-5" />
+                        <span class="icon-[fluent--settings-20-regular] w-5 h-5" aria-hidden="true"></span>
                         <span>{t("feed.settings")}</span>
                     </h2>
                     <p class="text-sm text-muted mb-4">{t("feed.settingsIntro")}</p>
