@@ -51,6 +51,8 @@
   },
   "form": {
     "copy": "Copy",
+    "like": "Like",
+  "unlike": "Unlike",
     "createReport": "Submit weekly report",
     "submit": "Submit",
     "selectSomething": "Choose a weekly report you want to read"
@@ -89,9 +91,19 @@
     "devFallback": "Not logged in — using local debug subscriber link",
     "copied": "Subscription link copied to clipboard",
     "copyFailed": "Copy failed",
+    "likedBy": "Liked by: {{names}}",
     "reset": "Reset subscription token",
     "settings": "Subscription settings",
     "settingsIntro": "Manage your subscription token here (reset will invalidate existing links)",
     "resetSuccess": "Subscription token has been reset"
+  }
+  ,
+  "like": {
+    "self": "You cannot like your own report",
+    "unlikeSelf": "You cannot unlike your own report",
+    "already": "You have already liked this report",
+    "failed": "Like action failed",
+    "network": "Network error, please try again later",
+    "unknown": "An unknown error occurred"
   }
 }

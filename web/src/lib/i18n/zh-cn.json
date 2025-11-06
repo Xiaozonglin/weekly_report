@@ -51,6 +51,8 @@
   },
   "form": {
     "copy": "复制",
+    "like": "点赞",
+  "unlike": "取消点赞",
     "createReport": "提交周报",
     "submit": "提交",
     "selectSomething": "选择一篇你想看的周报"
@@ -89,9 +91,19 @@
     "devFallback": "未登录，使用本地调试订阅链接",
     "copied": "已复制订阅链接到剪贴板",
     "copyFailed": "复制失败",
+    "likedBy": "已被以下用户点赞：{{names}}",
     "reset": "重置订阅 Token",
     "settings": "订阅设置",
     "settingsIntro": "在此你可以管理订阅 Token（重置将使旧链接失效）",
     "resetSuccess": "订阅 token 已重置"
+  }
+  ,
+  "like": {
+    "self": "不能给自己的周报点赞",
+    "unlikeSelf": "不能给自己的周报取消点赞",
+    "already": "你已经点过赞了",
+    "failed": "点赞操作失败",
+    "network": "网络错误，请稍后再试",
+    "unknown": "发生未知错误"
   }
 }

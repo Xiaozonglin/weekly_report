@@ -6,16 +6,24 @@ import Article from "@widgets/article";
 import LoadingTips from "@widgets/loading-tips";
 import { A, useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import type { HTTPError } from "ky";
-import { Match, Switch, createEffect, createSignal, untrack } from "solid-js";
+import { Match, Switch, Show, createEffect, createSignal, untrack, createMemo } from "solid-js";
 import { accountStore } from "@storage/account";
-import { get_self_feed_token, regenerate_self_feed_token } from "@api";
+import { get_self_feed_token, regenerate_self_feed_token, like_report, unlike_report } from "@api";
 
 export default function () {
     const params = useParams();
     const [searchParams, _] = useSearchParams();
     const navigate = useNavigate();
     const [report, setReport] = createSignal(null as Report | null);
+    // Maintain likes in a separate signal to avoid re-rendering the article/content when only likes change
+    const [likes, setLikes] = createSignal<string[]>([]);
     const [loading, setLoading] = createSignal(false);
+    const [processing, setProcessing] = createSignal(false);
+    const hasLiked = createMemo(() => {
+        const me = accountStore.user?.name || "";
+        const l = likes() || [];
+        return !!me && l.includes(me);
+    });
     createEffect(() => {
         if (params.user && searchParams.week) {
             untrack(() => {
@@ -26,7 +34,10 @@ export default function () {
                 }
                 setLoading(true);
                 get_report(user, week)
-                    .then(setReport)
+                    .then((r: Report) => {
+                        setReport(r);
+                        setLikes(Array.isArray(r?.likes) ? r.likes : []);
+                    })
                     .catch((err: HTTPError) => {
                         err.response.text().then((text) => {
                             addToast({
@@ -97,8 +108,76 @@ export default function () {
                             >
                                 <span class="icon-[fluent--rss-20-regular] w-5 h-5" />
                             </button>
+                            {/* Like/Unlike button (moved to title) */}
+                            <Show when={accountStore.user} fallback={null}>
+                                <button
+                                    class="px-2"
+                                    title={t("form.like")}
+                                    disabled={processing()}
+                                    onClick={async () => {
+                                        try {
+                                            // Block self-like/unlike at UI and show i18n toast
+                                            if (accountStore.user?.id === report()?.author_id) {
+                                                addToast({ level: "error", description: t("like.self")!, duration: 5000 });
+                                                return;
+                                            }
+                                            if (!report()) return;
+                                            const liked = hasLiked();
+                                            setProcessing(true);
+                                            try {
+                                                if (liked) {
+                                                    const resp = await unlike_report(report()!.id);
+                                                    setLikes(Array.isArray(resp.likes) ? resp.likes : []);
+                                                } else {
+                                                    const resp = await like_report(report()!.id);
+                                                    setLikes(Array.isArray(resp.likes) ? resp.likes : []);
+                                                }
+                                            } finally {
+                                                setProcessing(false);
+                                            }
+                                        } catch (e) {
+                                            // i18n-aware error handling for like/unlike actions
+                                            let desc = t("like.failed")!;
+                                            // ky throws HTTPError on non-2xx
+                                            const err = e as HTTPError;
+                                            if (err && (err as any).response) {
+                                                try {
+                                                    const status = (err as any).response?.status as number | undefined;
+                                                    const textRaw = await (err as any).response?.text?.();
+                                                    const text = (textRaw || "").toString().trim().toLowerCase();
+                                                    if (text.includes("cannot like your own report")) {
+                                                        desc = t("like.self")!;
+                                                    } else if (text.includes("cannot unlike your own report")) {
+                                                        desc = t("like.unlikeSelf")!;
+                                                    } else if (text.includes("already liked")) {
+                                                        desc = t("like.already")!;
+                                                    } else if (typeof status === "number") {
+                                                        // Fallback to generic error messages by status code
+                                                        const generic = t(`errors.${status}` as any);
+                                                        if (generic) desc = generic as string;
+                                                        else desc = t("errors.unknown")!;
+                                                    }
+                                                } catch (_) {
+                                                    // ignore parse failures
+                                                }
+                                            } else if (e instanceof TypeError) {
+                                                // likely network error from fetch/ky
+                                                desc = t("like.network")!;
+                                            } else {
+                                                desc = t("like.unknown")!;
+                                            }
+                                            addToast({ level: "error", description: desc, duration: 5000 });
+                                        }
+                                    }}
+                                >
+                                    <span class={hasLiked() ? "icon-[fluent--heart-20-filled] w-5 h-5 text-red-500" : "icon-[fluent--heart-20-regular] w-5 h-5"} />
+                                </button>
+                            </Show>
                         </h1>
                         <Article extra headingAnchors content={report()?.content || ""} />
+                        <div class="w-full max-w-5xl mt-4 p-3 border rounded-md bg-card/20">
+                            <div class="text-sm text-muted mb-2">{(likes() || []).length > 0 ? t("feed.likedBy", { names: (likes() || []).join(", ") }) : ""}</div>
+                        </div>
                     </div>
                 </Match>
                 <Match when={true}>

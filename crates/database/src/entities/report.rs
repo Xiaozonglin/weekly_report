@@ -15,6 +15,8 @@ pub struct Model {
     pub week: i32,
     #[sea_orm(column_type = "Text", nullable)]
     pub content: Option<String>,
+    #[sea_orm(column_type = "Text", nullable)]
+    pub likes: Option<String>,
     #[serde(with = "ts_seconds")]
     pub date: DateTime<Utc>,
 }
@@ -26,6 +28,7 @@ pub struct ExModel {
     pub author_name: String,
     pub week: i32,
     pub content: Option<String>,
+    pub likes: Option<String>,
     #[serde(with = "ts_seconds")]
     pub date: DateTime<Utc>,
 }
@@ -163,6 +166,7 @@ where
         author_id: user_id,
         week,
         content: Some(content),
+        likes: None,
         date: Utc::now(),
     };
     let model = model.into_active_model();
@@ -173,16 +177,48 @@ where
     model.insert(db).await
 }
 
+pub async fn get_by_id<C>(db: &C, id: i32) -> Result<Option<Model>, DbErr>
+where
+    C: ConnectionTrait,
+{
+    Entity::find_by_id(id).one(db).await
+}
+
 pub async fn update<C>(db: &C, model: Model) -> Result<Model, DbErr>
 where
     C: ConnectionTrait,
 {
-    let model = ActiveModel {
-        id: ActiveValue::Unchanged(model.id),
-        author_id: ActiveValue::Unchanged(model.author_id),
-        week: ActiveValue::Unchanged(model.week),
-        date: ActiveValue::Set(Utc::now()),
-        ..model.into_active_model().reset_all()
-    };
-    model.update(db).await
+    // Convert the incoming Model into an ActiveModel and update only the fields
+    // that should change. Using `reset_all()` here previously caused optional
+    // fields like `content` to become NotSet, which leads to clearing them in
+    // the DB on update. Instead, preserve the model's fields and only set the
+    // `date` to now.
+    let mut am = model.into_active_model();
+    am.date = ActiveValue::Set(Utc::now());
+    am.update(db).await
+}
+
+/// Update only the likes column for a given report id. This avoids touching
+/// other fields and is useful for concurrent-like operations.
+pub async fn update_likes_by_id<C>(db: &C, id: i32, likes: Option<String>) -> Result<Model, DbErr>
+where
+    C: ConnectionTrait,
+{
+    use sea_orm::entity::prelude::ColumnTrait;
+    use sea_orm::sea_query::Expr;
+
+    // Perform an atomic update of the likes column and then fetch the
+    // updated row to return a Model. This reduces the chance of clobbering
+    // other fields and makes the operation observable to callers.
+    let _res = Entity::update_many()
+        .col_expr(Column::Likes, Expr::value(likes.clone()))
+        .col_expr(Column::Date, Expr::value(Utc::now()))
+        .filter(Column::Id.eq(id))
+        .exec(db)
+        .await?;
+
+    match get_by_id(db, id).await? {
+        Some(m) => Ok(m),
+        None => Err(DbErr::Custom("report not found after update".to_string())),
+    }
 }

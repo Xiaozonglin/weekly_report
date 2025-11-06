@@ -8,7 +8,7 @@ use axum::{
     routing::{get, patch, post},
     Extension, Json, Router,
 };
-use chrono::{Datelike, Duration as ChronoDuration, Utc};
+use chrono::{Datelike, Duration as ChronoDuration, Utc, DateTime};
 use serde::{Deserialize, Serialize};
 use tower_http::{
     services::{ServeDir, ServeFile},
@@ -77,6 +77,10 @@ pub fn construct_router(state: &GlobalState) -> Router<GlobalState> {
         .merge(admin_router)
         .route("/user", get(get_user))
         .route("/report", get(get_report).post(handle_submit))
+    // like a report: POST /api/report/{id}/like
+    .route("/report/{id}/like", post(like_report))
+    // unlike a report: POST /api/report/{id}/unlike
+    .route("/report/{id}/unlike", post(unlike_report))
         .route("/self", get(get_self_info))
         .route("/ping", get(ping))
     .route("/self/feed_token", get(get_or_create_feed_token).post(regenerate_feed_token))
@@ -212,6 +216,61 @@ struct ReportQuery {
     pub week: Option<i32>,
 }
 
+// DTOs used by server responses: keep date serialization consistent and
+// expose `likes` as an array instead of the DB's JSON string.
+#[derive(Serialize)]
+struct ReportDto {
+    pub id: i32,
+    pub author_id: i32,
+    pub week: i32,
+    pub content: Option<String>,
+    pub likes: Option<Vec<String>>,
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub date: DateTime<Utc>,
+}
+
+#[derive(Serialize)]
+struct ExReportDto {
+    pub id: i32,
+    pub author_id: i32,
+    pub author_name: String,
+    pub week: i32,
+    pub content: Option<String>,
+    pub likes: Option<Vec<String>>,
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub date: DateTime<Utc>,
+}
+
+fn parse_likes_field(s: &Option<String>) -> Option<Vec<String>> {
+    match s {
+        Some(t) => serde_json::from_str::<Vec<String>>(t).ok(),
+        None => None,
+    }
+}
+
+fn model_to_dto(m: report::Model) -> ReportDto {
+    ReportDto {
+        id: m.id,
+        author_id: m.author_id,
+        week: m.week,
+        content: m.content,
+        likes: parse_likes_field(&m.likes),
+        date: m.date,
+    }
+}
+
+fn exmodel_to_dto(m: ExModel) -> ExReportDto {
+    ExReportDto {
+        id: m.id,
+        author_id: m.author_id,
+        author_name: m.author_name,
+        week: m.week,
+        content: m.content,
+        likes: parse_likes_field(&m.likes),
+        date: m.date,
+    }
+}
+
 async fn get_report(
     State(ref db): State<Database>,
     Query(query): Query<ReportQuery>,
@@ -223,7 +282,8 @@ async fn get_report(
             week: Some(week),
         } => {
             let report = report::get_ex(&db.conn, user, week).await?;
-            Ok(Json(report).into_response())
+            let dto = report.map(|r| exmodel_to_dto(r));
+            Ok(Json(dto).into_response())
         }
         ReportQuery {
             // return user's report list
@@ -231,7 +291,8 @@ async fn get_report(
             week: None,
         } => {
             let reports = report::get_user_list(&db.conn, user).await?;
-            Ok(Json(reports).into_response())
+            let dtos: Vec<ReportDto> = reports.into_iter().map(model_to_dto).collect();
+            Ok(Json(dtos).into_response())
         }
         ReportQuery {
             // return week's report list
@@ -239,14 +300,16 @@ async fn get_report(
             week: Some(week),
         } => {
             let reports = report::get_week_list(&db.conn, week).await?;
-            Ok(Json(reports).into_response())
+            let dtos: Vec<ExReportDto> = reports.into_iter().map(exmodel_to_dto).collect();
+            Ok(Json(dtos).into_response())
         }
         _ =>
         // return reports for index table
         {
             let reports = report::get_index_list(&db.conn).await?;
             let users = user::get_list(&db.conn, false).await?;
-            Ok(Json((users, reports)).into_response())
+            let dtos: Vec<ReportDto> = reports.into_iter().map(model_to_dto).collect();
+            Ok(Json((users, dtos)).into_response())
         }
     }
 }
@@ -338,6 +401,96 @@ async fn regenerate_feed_token(
     new_user.feed_token = Some(token.clone());
     let updated = user::update(&db.conn, new_user).await?;
     Ok(Json(serde_json::json!({ "token": updated.feed_token })))
+}
+
+// Like a report. Bodyless POST. Requirements:
+// - authenticated user (provided by data::prepare_user_info middleware)
+// - cannot like own report
+// - cannot like twice (username unique)
+async fn like_report(
+    State(ref db): State<Database>,
+    Extension(current_user): Extension<user::Model>,
+    axum::extract::Path(id): axum::extract::Path<i32>,
+) -> Result<impl IntoResponse, ResponseError> {
+    // find report by id using database helper
+    let r = report::get_by_id(&db.conn, id).await?;
+    let r = match r {
+        Some(v) => v,
+        None => return Err(ResponseError::NotFound("report not found".to_string())),
+    };
+
+    tracing::info!(user = %current_user.name, report_id = id, "like_report invoked");
+
+    if r.author_id == current_user.id {
+        tracing::warn!(user = %current_user.name, report_id = id, "attempted to like own report");
+        return Err(ResponseError::BadRequest("cannot like your own report".to_string()));
+    }
+
+    // parse likes JSON array
+    let mut likes: Vec<String> = match r.likes.clone() {
+        Some(s) => serde_json::from_str(&s).unwrap_or_default(),
+        None => vec![],
+    };
+
+    if likes.iter().any(|n| n == &current_user.name) {
+        return Err(ResponseError::BadRequest("already liked".to_string()));
+    }
+
+    likes.push(current_user.name.clone());
+    let likes_s = serde_json::to_string(&likes)?;
+
+    // update only likes column using DB helper to avoid clobbering other fields
+    match report::update_likes_by_id(&db.conn, id, Some(likes_s.clone())).await {
+        Ok(_) => {
+            tracing::info!(user = %current_user.name, report_id = id, likes_count = likes.len(), "like_report success");
+            Ok(Json(serde_json::json!({ "likes": likes })))
+        }
+            Err(e) => {
+            tracing::error!(error = %e, user = %current_user.name, report_id = id, "like_report db error");
+            Err(ResponseError::InternalServerError("failed to update likes".to_string(), e.to_string()))
+        }
+    }
+}
+
+async fn unlike_report(
+    State(ref db): State<Database>,
+    Extension(current_user): Extension<user::Model>,
+    axum::extract::Path(id): axum::extract::Path<i32>,
+) -> Result<impl IntoResponse, ResponseError> {
+    let r = report::get_by_id(&db.conn, id).await?;
+    let r = match r {
+        Some(v) => v,
+        None => return Err(ResponseError::NotFound("report not found".to_string())),
+    };
+
+    tracing::info!(user = %current_user.name, report_id = id, "unlike_report invoked");
+
+    // cannot unlike your own report
+    if r.author_id == current_user.id {
+        tracing::warn!(user = %current_user.name, report_id = id, "attempted to unlike own report");
+        return Err(ResponseError::BadRequest("cannot unlike your own report".to_string()));
+    }
+
+    let mut likes: Vec<String> = match r.likes.clone() {
+        Some(s) => serde_json::from_str(&s).unwrap_or_default(),
+        None => vec![],
+    };
+
+    // remove any occurrences of the current user name
+    likes.retain(|n| n != &current_user.name);
+
+    let likes_s = serde_json::to_string(&likes)?;
+
+    match report::update_likes_by_id(&db.conn, id, Some(likes_s.clone())).await {
+        Ok(_) => {
+            tracing::info!(user = %current_user.name, report_id = id, likes_count = likes.len(), "unlike_report success");
+            Ok(Json(serde_json::json!({ "likes": likes })))
+        }
+        Err(e) => {
+            tracing::error!(error = %e, user = %current_user.name, report_id = id, "unlike_report db error");
+            Err(ResponseError::InternalServerError("failed to update likes".to_string(), e.to_string()))
+        }
+    }
 }
 
 /// Build RSS 2.0 XML for given user and reports. Description is wrapped in CDATA and

@@ -17,6 +17,7 @@
         "paths": {
             "@/*": ["src/*"],
             "@lib/*": ["src/lib/*"],
+            "@api": ["src/lib/api"],
             "@api/*": ["src/lib/api/*"],
             "@assets/*": ["src/lib/assets/*"],
             "@blocks/*": ["src/lib/blocks/*"],

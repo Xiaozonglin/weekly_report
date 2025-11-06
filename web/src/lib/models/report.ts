@@ -5,4 +5,5 @@ export type Report = {
     week: number;
     content: string | null;
     date: number;
+    likes?: string[];
 };
