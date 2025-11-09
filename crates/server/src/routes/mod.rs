@@ -110,16 +110,23 @@ async fn get_status(State(ref db): State<Database>) -> Result<impl IntoResponse,
     let edge =
         next_sunday.year() * 10_000 + next_sunday.month() as i32 * 100 + next_sunday.day() as i32;
     let reports = report::get_week_list(&db.conn, edge).await?;
+    // 仅返回 level 最大的一批成员的提交情况
+    let max_level = users.iter().map(|u| u.level).max().unwrap_or(i32::MIN);
+    let top_users = users.into_iter().filter(|u| u.level == max_level);
+
     let mut submitted = vec![];
     let mut pending = vec![];
-    for user in users {
-        let report = reports.iter().find(|r| r.author_id == user.id);
-        if report.is_some() {
+    for user in top_users {
+        let has_report = reports.iter().any(|r| r.author_id == user.id);
+        if has_report {
             submitted.push(user.name.clone());
         } else {
             pending.push(user.name.clone());
         }
     }
+    // 可选：为了更稳定的返回，按名字排序
+    submitted.sort();
+    pending.sort();
     Ok(Json(StatusResponse { submitted, pending }))
 }
 

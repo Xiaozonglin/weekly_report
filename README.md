@@ -76,6 +76,7 @@ $env:WR_PORT = '8080'
 $env:DATABASE_URL = 'mysql://root:root@localhost/wr'
 $env:WR_STATIC = 'C:\Users\you\path\to\weekly_report\web'
 $env:RUST_LOG = 'info'
+$env:WR_PUBLIC_URL = 'http://127.0.0.1:8080'
 ```
 
 然后在不同终端分别启动后端与前端：
@@ -90,3 +91,24 @@ cd C:\Users\you\path\to\weekly_report\web
 npm install
 npm run dev
 ```
+
+## API 行为说明更新
+
+### /api/status
+
+现在该接口仅返回“当前所有未隐藏用户中 level 最大的那一批成员”的本周提交情况，而不是返回全部成员。返回结构保持不变：
+
+```json
+{
+	"submitted": ["Alice", "Bob"],
+	"pending": ["Charlie"]
+}
+```
+
+语义：
+- `submitted`：本周（以最近的周日为边界计算出的周编号）已提交周报的、且 level == 全部用户最大 level 的成员名称列表。
+- `pending`：同一批用户里尚未提交的成员名称列表。
+
+注意：如果暂时没有用户（空列表），两个数组都会为空。为了响应稳定性，内部会按名称排序。
+
+如果未来需要再次查看全部用户提交情况，可考虑新增一个例如 `/api/status/all` 的端点（当前未实现）。
