@@ -2,6 +2,8 @@ use chrono::{serde::ts_seconds, DateTime, Datelike, Duration, Utc};
 use sea_orm::{
     entity::prelude::*, ActiveValue, FromQueryResult, IntoActiveModel, JoinType, QuerySelect,
 };
+use sea_orm::JsonValue;
+use sea_orm::{DatabaseBackend, DatabaseConnection, Statement};
 use serde::{Deserialize, Serialize};
 
 use crate::user;
@@ -15,8 +17,9 @@ pub struct Model {
     pub week: i32,
     #[sea_orm(column_type = "Text", nullable)]
     pub content: Option<String>,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub likes: Option<String>,
+    // Use SeaORM's JsonValue for JSON column storage
+    #[sea_orm(column_type = "Json", nullable)]
+    pub likes: Option<JsonValue>,
     #[serde(with = "ts_seconds")]
     pub date: DateTime<Utc>,
 }
@@ -28,7 +31,8 @@ pub struct ExModel {
     pub author_name: String,
     pub week: i32,
     pub content: Option<String>,
-    pub likes: Option<String>,
+    // Keep the same JSON type for joined model
+    pub likes: Option<JsonValue>,
     #[serde(with = "ts_seconds")]
     pub date: DateTime<Utc>,
 }
@@ -166,7 +170,8 @@ where
         author_id: user_id,
         week,
         content: Some(content),
-        likes: None,
+        // default to empty JSON array to guarantee valid JSON stored
+        likes: Some(JsonValue::Array(vec![])),
         date: Utc::now(),
     };
     let model = model.into_active_model();
@@ -200,25 +205,22 @@ where
 
 /// Update only the likes column for a given report id. This avoids touching
 /// other fields and is useful for concurrent-like operations.
-pub async fn update_likes_by_id<C>(db: &C, id: i32, likes: Option<String>) -> Result<Model, DbErr>
+pub async fn update_likes_by_id<C>(
+    db: &C,
+    id: i32,
+    likes: Option<Vec<String>>,
+) -> Result<Model, DbErr>
 where
     C: ConnectionTrait,
 {
-    use sea_orm::entity::prelude::ColumnTrait;
-    use sea_orm::sea_query::Expr;
+    // Use ActiveModel update for a single row instead of update_many
+    let am = ActiveModel {
+        id: ActiveValue::Set(id),
+        likes: ActiveValue::Set(likes.map(|v| serde_json::Value::Array(v.into_iter().map(serde_json::Value::String).collect()))),
+        date: ActiveValue::Set(Utc::now()),
+        ..Default::default()
+    };
+    am.update(db).await
+}
 
-    // Perform an atomic update of the likes column and then fetch the
-    // updated row to return a Model. This reduces the chance of clobbering
-    // other fields and makes the operation observable to callers.
-    let _res = Entity::update_many()
-        .col_expr(Column::Likes, Expr::value(likes.clone()))
-        .col_expr(Column::Date, Expr::value(Utc::now()))
-        .filter(Column::Id.eq(id))
-        .exec(db)
-        .await?;
-
-    match get_by_id(db, id).await? {
-        Some(m) => Ok(m),
-        None => Err(DbErr::Custom("report not found after update".to_string())),
-    }
 }

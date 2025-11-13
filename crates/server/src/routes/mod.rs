@@ -241,10 +241,14 @@ struct ExReportDto {
     pub date: DateTime<Utc>,
 }
 
-fn parse_likes_field(s: &Option<String>) -> Option<Vec<String>> {
+fn parse_likes_field(s: &Option<serde_json::Value>) -> Option<Vec<String>> {
     match s {
-        Some(t) => serde_json::from_str::<Vec<String>>(t).ok(),
-        None => None,
+        Some(serde_json::Value::Array(arr)) => Some(
+            arr.iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect(),
+        ),
+        _ => None,
     }
 }
 
@@ -426,21 +430,16 @@ async fn like_report(
         return Err(ResponseError::BadRequest("cannot like your own report".to_string()));
     }
 
-    // parse likes JSON array
-    let mut likes: Vec<String> = match r.likes.clone() {
-        Some(s) => serde_json::from_str(&s).unwrap_or_default(),
-        None => vec![],
-    };
+    // likes stored as JSON array
+    let mut likes: Vec<String> = parse_likes_field(&r.likes).unwrap_or_default();
 
     if likes.iter().any(|n| n == &current_user.name) {
         return Err(ResponseError::BadRequest("already liked".to_string()));
     }
 
     likes.push(current_user.name.clone());
-    let likes_s = serde_json::to_string(&likes)?;
-
     // update only likes column using DB helper to avoid clobbering other fields
-    match report::update_likes_by_id(&db.conn, id, Some(likes_s.clone())).await {
+    match report::update_likes_by_id(&db.conn, id, Some(likes.clone())).await {
         Ok(_) => {
             tracing::info!(user = %current_user.name, report_id = id, likes_count = likes.len(), "like_report success");
             Ok(Json(serde_json::json!({ "likes": likes })))
@@ -471,17 +470,12 @@ async fn unlike_report(
         return Err(ResponseError::BadRequest("cannot unlike your own report".to_string()));
     }
 
-    let mut likes: Vec<String> = match r.likes.clone() {
-        Some(s) => serde_json::from_str(&s).unwrap_or_default(),
-        None => vec![],
-    };
+    let mut likes: Vec<String> = parse_likes_field(&r.likes).unwrap_or_default();
 
     // remove any occurrences of the current user name
     likes.retain(|n| n != &current_user.name);
 
-    let likes_s = serde_json::to_string(&likes)?;
-
-    match report::update_likes_by_id(&db.conn, id, Some(likes_s.clone())).await {
+    match report::update_likes_by_id(&db.conn, id, Some(likes.clone())).await {
         Ok(_) => {
             tracing::info!(user = %current_user.name, report_id = id, likes_count = likes.len(), "unlike_report success");
             Ok(Json(serde_json::json!({ "likes": likes })))
