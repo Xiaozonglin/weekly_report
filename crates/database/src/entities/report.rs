@@ -3,7 +3,6 @@ use sea_orm::{
     entity::prelude::*, ActiveValue, FromQueryResult, IntoActiveModel, JoinType, QuerySelect,
 };
 use sea_orm::JsonValue;
-use sea_orm::{DatabaseBackend, DatabaseConnection, Statement};
 use serde::{Deserialize, Serialize};
 
 use crate::user;
