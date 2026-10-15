@@ -201,8 +201,8 @@ async fn handle_submit(
     Json(form): Json<SubmitForm>,
 ) -> Result<impl IntoResponse, ResponseError> {
     let date = Utc::now();
-    if date.weekday() != chrono::Weekday::Sun {
-        return Err(ResponseError::BadRequest("Only Sunday".to_string()));
+    if date.weekday() != chrono::Weekday::Sat && date.weekday() != chrono::Weekday::Sun {
+        return Err(ResponseError::BadRequest("Only Weekend".to_string()));
     }
     let week = date.year() * 10_000 + date.month() as i32 * 100 + date.day() as i32;
     let report = report::get(&db.conn, user.id, week).await?;
