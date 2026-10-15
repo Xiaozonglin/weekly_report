@@ -93,6 +93,30 @@ async fn ping() -> impl IntoResponse {
     "pong"
 }
 
+/// Public-safe user representation that excludes sensitive fields (email, feed_token).
+#[derive(Clone, Serialize)]
+struct PublicUser {
+    id: i32,
+    name: String,
+    direction: Option<String>,
+    level: i32,
+    is_hidden: bool,
+    is_admin: bool,
+}
+
+impl From<wr_database::user::Model> for PublicUser {
+    fn from(u: wr_database::user::Model) -> Self {
+        Self {
+            id: u.id,
+            name: u.name,
+            direction: u.direction,
+            level: u.level,
+            is_hidden: u.is_hidden,
+            is_admin: u.is_admin,
+        }
+    }
+}
+
 #[derive(Serialize)]
 struct StatusResponse {
     submitted: Vec<String>,
@@ -154,14 +178,14 @@ async fn get_user(
             with_hidden: _,
         } => {
             let user = user::get(&db.conn, id).await?;
-            Ok(Json(user).into_response())
+            Ok(Json(user.map(PublicUser::from)).into_response())
         }
         UserQuery {
             id: None,
             with_hidden,
         } => {
             let users = user::get_list(&db.conn, with_hidden.unwrap_or(false)).await?;
-            Ok(Json(users).into_response())
+            Ok(Json(users.into_iter().map(PublicUser::from).collect::<Vec<_>>()).into_response())
         }
     }
 }
@@ -245,7 +269,8 @@ async fn get_report(
         // return reports for index table
         {
             let reports = report::get_index_list(&db.conn).await?;
-            let users = user::get_list(&db.conn, false).await?;
+            let users: Vec<PublicUser> = user::get_list(&db.conn, false).await?
+                .into_iter().map(Into::into).collect();
             Ok(Json((users, reports)).into_response())
         }
     }
