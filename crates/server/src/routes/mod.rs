@@ -205,7 +205,12 @@ async fn handle_submit(
         return Err(ResponseError::BadRequest("Only Weekend".to_string()));
     }
     // when it is Saturday, add one.
-    let week = date.year() * 10_000 + date.month() as i32 * 100 + date.day() as i32 + (date.weekday() == chrono::Weekday::Sat) as i32;
+    let week_date = if date.weekday() == chrono::Weekday::Sat {
+        date + ChronoDuration::days(1)
+    } else {
+        date
+    };
+    let week = week_date.year() * 10_000 + week_date.month() as i32 * 100 + week_date.day() as i32;
     let report = report::get(&db.conn, user.id, week).await?;
     if let Some(report) = report {
         Ok(Json(
